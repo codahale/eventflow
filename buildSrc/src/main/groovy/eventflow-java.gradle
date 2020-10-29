@@ -1,0 +1,22 @@
+plugins {
+    id 'idea'
+    id 'java'
+    id 'com.diffplug.spotless'
+}
+
+repositories {
+    mavenCentral()
+}
+
+compileJava {
+    sourceCompatibility = 11
+    targetCompatibility = 11
+}
+
+spotless {
+    java {
+        googleJavaFormat()
+    }
+}
+
+build.dependsOn 'spotlessApply'

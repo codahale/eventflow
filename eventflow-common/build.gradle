@@ -1,12 +1,7 @@
 plugins {
-	id 'idea'
 	id 'java-library'
-	id 'com.diffplug.spotless'
+	id 'eventflow-java'
 	id 'com.google.protobuf' version '0.8.13'
-}
-
-repositories {
-	mavenCentral()
 }
 
 dependencies {
@@ -38,16 +33,3 @@ protobuf {
 		artifact = "com.google.protobuf:protoc:$protobufVersion"
 	}
 }
-
-compileJava {
-	sourceCompatibility = 11
-	targetCompatibility = 11
-}
-
-spotless {
-	java {
-		googleJavaFormat()
-	}
-}
-
-build.dependsOn 'spotlessApply'

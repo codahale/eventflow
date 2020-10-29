@@ -1,2 +1,3 @@
 rootProject.name = 'eventflow'
 include 'eventflow-common'
+include 'eventflow-dataflow-ingest'
