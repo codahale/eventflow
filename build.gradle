@@ -1,0 +1,18 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+}
+
+plugins {
+	id 'idea'
+	id 'com.diffplug.spotless' version '5.7.0'
+}
+
+spotless {
+	groovyGradle {
+		greclipse()
+	}
+}
+
+

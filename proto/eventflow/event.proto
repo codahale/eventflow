@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package eventflow;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_package = "io.eventflow.common.pb";
+option java_outer_classname = "EventPB";
+option java_multiple_files = true;
+
+message Event {
+  string id = 1;
+  string type = 2;
+  string source = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  map<string, AttributeValue> attributes = 5;
+}
+
+message AttributeValue {
+  oneof value {
+    bool bool_value = 1;
+    int64 int_value = 2;
+    double float_value = 3;
+    string string_value = 4;
+    bytes bytes_value = 5;
+    google.protobuf.Timestamp timestamp_value = 6;
+    google.protobuf.Duration duration_value = 7;
+  }
+}
