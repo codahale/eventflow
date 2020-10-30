@@ -4,10 +4,8 @@ import com.google.api.services.bigquery.model.Clustering;
 import com.google.api.services.bigquery.model.TableReference;
 import com.google.api.services.bigquery.model.TableSchema;
 import com.google.api.services.bigquery.model.TimePartitioning;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Resources;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
 import io.eventflow.common.pb.Event;
@@ -84,7 +82,7 @@ public class IngestPipeline {
         "Write Events To BigQuery",
         bigQuerySink(
                 BigQueryHelpers.parseTableSpec(opts.getEventsTable()),
-                loadTableSchema("events"),
+                Schemas.loadTableSchema("events"),
                 new EventToAvro())
             .withTableDescription("Events which have been ingested and validated.")
 
@@ -115,7 +113,7 @@ public class IngestPipeline {
         "Write Invalid Messages To BigQuery",
         bigQuerySink(
                 BigQueryHelpers.parseTableSpec(opts.getInvalidMessagesTable()),
-                loadTableSchema("invalid_messages"),
+                Schemas.loadTableSchema("invalid_messages"),
                 new InvalidMessageToAvro())
             .withTableDescription(
                 "Messages received by the ingest job which were not valid events.")
@@ -131,14 +129,6 @@ public class IngestPipeline {
                     .setRequirePartitionFilter(true)));
 
     pipeline.run();
-  }
-
-  private static TableSchema loadTableSchema(String table) throws IOException {
-    return BigQueryHelpers.fromJsonString(
-        Resources.toString(
-            Resources.getResource(IngestPipeline.class, String.format("/schemas/%s.json", table)),
-            Charsets.UTF_8),
-        TableSchema.class);
   }
 
   private static <T> BigQueryIO.Write<T> bigQuerySink(
