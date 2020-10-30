@@ -26,22 +26,11 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.Validation;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.SerializableFunction;
-import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.joda.time.Duration;
 
 public class IngestPipeline {
   static final String ID_ATTRIBUTE = "event.id";
-
-  static TupleTag<Event> VALID =
-      new TupleTag<>() {
-        private static final long serialVersionUID = 6993653980433915514L;
-      };
-
-  static TupleTag<InvalidMessage> INVALID =
-      new TupleTag<>() {
-        private static final long serialVersionUID = -8091864608888047813L;
-      };
 
   public static void main(String[] args) throws IOException {
     var opts = PipelineOptionsFactory.fromArgs(args).withValidation().as(Options.class);
@@ -69,9 +58,9 @@ public class IngestPipeline {
             .apply(
                 "Parse And Validate",
                 ParDo.of(new MessageParser(Clock.systemUTC()))
-                    .withOutputTags(VALID, TupleTagList.of(INVALID)));
+                    .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    var validEvents = validated.get(VALID);
+    var validEvents = validated.get(MessageParser.VALID);
 
     // Batch write valid events to a common table in BigQuery.
     validEvents.apply(
@@ -105,7 +94,7 @@ public class IngestPipeline {
             PubsubIO.writeMessages().to(parseTopic(opts.getProject(), opts.getTopic())));
 
     // Batch write invalid messages to a common table in BigQuery.
-    var invalidMessages = validated.get(INVALID);
+    var invalidMessages = validated.get(MessageParser.INVALID);
     invalidMessages.apply(
         "Write Invalid Messages To BigQuery",
         bigQuerySink(

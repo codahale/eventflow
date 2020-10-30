@@ -12,9 +12,19 @@ import java.time.Clock;
 import java.util.Map;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.values.TupleTag;
 
 public class MessageParser extends DoFn<PubsubMessage, Event> {
   private static final long serialVersionUID = -3444251307350466926L;
+
+  static TupleTag<Event> VALID =
+      new TupleTag<>() {
+        private static final long serialVersionUID = 6993653980433915514L;
+      };
+  static TupleTag<InvalidMessage> INVALID =
+      new TupleTag<>() {
+        private static final long serialVersionUID = -8091864608888047813L;
+      };
 
   private final Clock clock;
 
@@ -30,10 +40,10 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
       var event = tryParse(message.getPayload());
       try {
         validateEvent(event, message);
-        c.output(IngestPipeline.VALID, event);
+        c.output(VALID, event);
       } catch (IllegalArgumentException e) {
         c.output(
-            IngestPipeline.INVALID,
+            INVALID,
             InvalidMessage.newBuilder()
                 .setMessageId(message.getMessageId())
                 .putAllMessageAttributes(message.getAttributeMap())
@@ -48,7 +58,7 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
       }
     } catch (InvalidProtocolBufferException e) {
       c.output(
-          IngestPipeline.INVALID,
+          INVALID,
           InvalidMessage.newBuilder()
               .setMessageId(message.getMessageId())
               .putAllMessageAttributes(message.getAttributeMap())
@@ -80,7 +90,7 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
       throw new IllegalArgumentException("blank event source");
     }
 
-    if (!Timestamps.isValid(event.getTimestamp())) {
+    if (!event.hasTimestamp() || !Timestamps.isValid(event.getTimestamp())) {
       throw new IllegalArgumentException("invalid event timestamp");
     }
 
@@ -91,7 +101,7 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
     for (Map.Entry<String, AttributeValue> attribute : event.getAttributesMap().entrySet()) {
       var key = attribute.getKey();
       if (key.isBlank()) {
-        throw new IllegalArgumentException("blank attribute name");
+        throw new IllegalArgumentException("blank attribute key");
       }
 
       var value = attribute.getValue();
