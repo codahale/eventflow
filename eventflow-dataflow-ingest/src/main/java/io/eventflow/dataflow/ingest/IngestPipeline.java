@@ -31,7 +31,6 @@ import org.apache.beam.sdk.values.TupleTagList;
 import org.joda.time.Duration;
 
 public class IngestPipeline {
-
   static final String ID_ATTRIBUTE = "event.id";
 
   static TupleTag<Event> VALID =
@@ -74,9 +73,6 @@ public class IngestPipeline {
 
     var validEvents = validated.get(VALID);
 
-    // TODO events schema
-    // TODO invalid messages schema
-
     // Batch write valid events to a common table in BigQuery.
     validEvents.apply(
         "Write Events To BigQuery",
@@ -108,6 +104,7 @@ public class IngestPipeline {
             "Publish To Pub/Sub",
             PubsubIO.writeMessages().to(parseTopic(opts.getProject(), opts.getTopic())));
 
+    // Batch write invalid messages to a common table in BigQuery.
     var invalidMessages = validated.get(INVALID);
     invalidMessages.apply(
         "Write Invalid Messages To BigQuery",
