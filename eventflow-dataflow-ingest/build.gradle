@@ -17,6 +17,7 @@ dependencies {
     implementation "com.google.protobuf:protobuf-java:$protobufVersion"
     implementation "com.google.protobuf:protobuf-java-util:$protobufVersion"
 
+    testImplementation "junit:junit:$junitVersion"
     testImplementation "org.apache.beam:beam-sdks-java-test-utils:$beamVersion"
 }
 

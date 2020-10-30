@@ -8,5 +8,5 @@ dependencies {
 	api "com.google.protobuf:protobuf-java:$protobufVersion"
 	api "com.google.protobuf:protobuf-java-util:$protobufVersion"
 
-	testImplementation 'junit:junit:4.13.1'
+	testImplementation "junit:junit:$junitVersion"
 }
