@@ -1,7 +1,7 @@
 plugins {
 	id 'java-library'
 	id 'eventflow-java'
-	id 'com.google.protobuf' version '0.8.13'
+	id 'com.google.protobuf'
 }
 
 dependencies {

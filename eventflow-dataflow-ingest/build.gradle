@@ -1,6 +1,7 @@
 plugins {
     id 'application'
     id 'eventflow-java'
+    id 'com.google.protobuf'
 }
 
 tasks.distTar.enabled = false
@@ -13,6 +14,8 @@ dependencies {
     implementation "org.apache.beam:beam-sdks-java-io-google-cloud-platform:$beamVersion"
     implementation "org.apache.beam:beam-sdks-java-extensions-protobuf:$beamVersion"
     implementation 'org.slf4j:slf4j-jdk14:1.7.30'
+    implementation "com.google.protobuf:protobuf-java:$protobufVersion"
+    implementation "com.google.protobuf:protobuf-java-util:$protobufVersion"
 
     testImplementation "org.apache.beam:beam-sdks-java-test-utils:$beamVersion"
 }
