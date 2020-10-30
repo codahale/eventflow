@@ -1,0 +1,90 @@
+{
+  "fields": [
+    {
+      "description": "The event's unique ID.",
+      "type": "STRING",
+      "name": "id",
+      "mode": "REQUIRED"
+    },
+    {
+      "description": "The type of the event.",
+      "type": "STRING",
+      "name": "type",
+      "mode": "REQUIRED"
+    },
+    {
+      "description": "The source of the event.",
+      "type": "STRING",
+      "name": "source",
+      "mode": "REQUIRED"
+    },
+    {
+      "description": "The customer associated with the event.",
+      "type": "STRING",
+      "name": "customer",
+      "mode": "NULLABLE"
+    },
+    {
+      "description": "The timestamp at which the event occurred.",
+      "type": "TIMESTAMP",
+      "name": "timestamp",
+      "mode": "REQUIRED"
+    },
+    {
+      "description": "The event's attributes.",
+      "type": "RECORD",
+      "name": "attributes",
+      "mode": "REPEATED",
+      "fields": [
+        {
+          "description": "The name of the attribute.",
+          "type": "STRING",
+          "name": "key",
+          "mode": "REQUIRED"
+        },
+        {
+          "description": "The boolean value of the attribute.",
+          "type": "BOOLEAN",
+          "name": "bool_value",
+          "mode": "NULLABLE"
+        },
+        {
+          "description": "The integer value of the attribute.",
+          "type": "INTEGER",
+          "name": "int_value",
+          "mode": "NULLABLE"
+        },
+        {
+          "description": "The float value of the attribute.",
+          "type": "FLOAT",
+          "name": "float_value",
+          "mode": "NULLABLE"
+        },
+        {
+          "description": "The string value of the attribute.",
+          "type": "STRING",
+          "name": "string_value",
+          "mode": "NULLABLE"
+        },
+        {
+          "description": "The bytes value of the attribute.",
+          "type": "BYTES",
+          "name": "bytes_value",
+          "mode": "NULLABLE"
+        },
+        {
+          "description": "The timestamp value of the attribute.",
+          "type": "TIMESTAMP",
+          "name": "timestamp_value",
+          "mode": "NULLABLE"
+        },
+        {
+          "description": "The duration value of the attribute (always in microseconds).",
+          "type": "INTEGER",
+          "name": "duration_value",
+          "mode": "NULLABLE"
+        }
+      ]
+    }
+  ]
+}

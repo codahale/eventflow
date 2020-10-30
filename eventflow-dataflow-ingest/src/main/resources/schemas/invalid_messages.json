@@ -1,0 +1,54 @@
+{
+  "fields": [
+    {
+      "description": "The message's ID, as assigned by Pub/Sub.",
+      "type": "STRING",
+      "name": "message_id",
+      "mode": "REQUIRED"
+    },
+    {
+      "description": "The message's data.",
+      "type": "BYTES",
+      "name": "message_data",
+      "mode": "REQUIRED"
+    },
+    {
+      "description": "The message's attributes",
+      "type": "RECORD",
+      "name": "message_attributes",
+      "mode": "REPEATED",
+      "fields": [
+        {
+          "description": "The attribute's key.",
+          "type": "STRING",
+          "name": "key",
+          "mode": "REQUIRED"
+        },
+        {
+          "description": "The attribute's value.",
+          "type": "STRING",
+          "name": "value",
+          "mode": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "description": "The timestamp when the message was received by the ingest job.",
+      "type": "TIMESTAMP",
+      "name": "received_at",
+      "mode": "REQUIRED"
+    },
+    {
+      "description": "The reason why the message is not a valid event.",
+      "type": "STRING",
+      "name": "error",
+      "mode": "REQUIRED"
+    },
+    {
+      "description": "The event, if any, in text form.",
+      "type": "STRING",
+      "name": "event",
+      "mode": "NULLABLE"
+    }
+  ]
+}
