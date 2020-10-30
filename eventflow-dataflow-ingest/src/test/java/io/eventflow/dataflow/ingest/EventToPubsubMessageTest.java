@@ -64,11 +64,11 @@ public class EventToPubsubMessageTest {
   public void eventWithoutCustomer() {
     var event =
         Event.newBuilder()
-             .setId("mcduck")
-             .setSource("mobile")
-             .setType("click")
-             .setTimestamp(Timestamps.fromSeconds(200))
-             .build();
+            .setId("mcduck")
+            .setSource("mobile")
+            .setType("click")
+            .setTimestamp(Timestamps.fromSeconds(200))
+            .build();
     var messages = pipeline.apply(Create.of(event)).apply(ParDo.of(new EventToPubsubMessage()));
 
     var attributes = new HashMap<String, String>();
@@ -78,15 +78,15 @@ public class EventToPubsubMessageTest {
     attributes.put("event.type", "click");
 
     PAssert.that(messages)
-           // PubsubMessage, delightfully, doesn't have an equals impl
-           .satisfies(
-               msgs -> {
-                 for (PubsubMessage msg : msgs) {
-                   assertEquals(attributes, msg.getAttributeMap());
-                   assertArrayEquals(event.toByteArray(), msg.getPayload());
-                 }
-                 return null;
-               });
+        // PubsubMessage, delightfully, doesn't have an equals impl
+        .satisfies(
+            msgs -> {
+              for (PubsubMessage msg : msgs) {
+                assertEquals(attributes, msg.getAttributeMap());
+                assertArrayEquals(event.toByteArray(), msg.getPayload());
+              }
+              return null;
+            });
 
     pipeline.run();
   }

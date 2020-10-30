@@ -57,19 +57,19 @@ public class EventToAvroTest {
   public void eventWithoutCustomer() throws IOException {
     var event =
         Event.newBuilder()
-             .setId("id")
-             .setType("type")
-             .setSource("source")
-             .setTimestamp(Timestamps.fromSeconds(123456))
-             .putAttributes("bool", AttributeValues.boolValue(true))
-             .putAttributes("int", AttributeValues.intValue(200))
-             .putAttributes("float", AttributeValues.floatValue(200.2))
-             .putAttributes("string", AttributeValues.stringValue("ok"))
-             .putAttributes("bytes", AttributeValues.bytesValue("yes"))
-             .putAttributes(
-                 "timestamp", AttributeValues.timestampValue(Instant.ofEpochSecond(12345)))
-             .putAttributes("duration", AttributeValues.durationValue(Duration.ofMinutes(20)))
-             .build();
+            .setId("id")
+            .setType("type")
+            .setSource("source")
+            .setTimestamp(Timestamps.fromSeconds(123456))
+            .putAttributes("bool", AttributeValues.boolValue(true))
+            .putAttributes("int", AttributeValues.intValue(200))
+            .putAttributes("float", AttributeValues.floatValue(200.2))
+            .putAttributes("string", AttributeValues.stringValue("ok"))
+            .putAttributes("bytes", AttributeValues.bytesValue("yes"))
+            .putAttributes(
+                "timestamp", AttributeValues.timestampValue(Instant.ofEpochSecond(12345)))
+            .putAttributes("duration", AttributeValues.durationValue(Duration.ofMinutes(20)))
+            .build();
 
     var row = f.apply(new AvroWriteRequest<>(event, schema));
     assertEquals(

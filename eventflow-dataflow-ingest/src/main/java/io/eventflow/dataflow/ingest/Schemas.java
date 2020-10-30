@@ -19,7 +19,8 @@ public class Schemas {
     return BigQueryHelpers.fromJsonString(json, TableSchema.class);
   }
 
-  public static Schema tableSchemaToAvroSchema(TableSchema tableSchema) throws ReflectiveOperationException {
+  public static Schema tableSchemaToAvroSchema(TableSchema tableSchema)
+      throws ReflectiveOperationException {
     var klass = Class.forName("org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtils");
     var method = klass.getDeclaredMethod("toGenericAvroSchema", String.class, List.class);
     method.setAccessible(true);

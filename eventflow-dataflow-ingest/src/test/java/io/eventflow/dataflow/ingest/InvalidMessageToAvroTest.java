@@ -43,12 +43,12 @@ public class InvalidMessageToAvroTest {
   public void invalidMessageWithoutEvent() throws IOException {
     var message =
         InvalidMessage.newBuilder()
-                      .setMessageId("12345")
-                      .putMessageAttributes("event.id", "test")
-                      .setMessageData(ByteString.copyFromUtf8("ok"))
-                      .setReceivedAt(Timestamps.fromSeconds(123456))
-                      .setError("bad vibes")
-                      .build();
+            .setMessageId("12345")
+            .putMessageAttributes("event.id", "test")
+            .setMessageData(ByteString.copyFromUtf8("ok"))
+            .setReceivedAt(Timestamps.fromSeconds(123456))
+            .setError("bad vibes")
+            .build();
 
     var row = f.apply(new AvroWriteRequest<>(message, schema));
     assertEquals(
@@ -61,13 +61,13 @@ public class InvalidMessageToAvroTest {
   public void invalidMessage() throws IOException {
     var message =
         InvalidMessage.newBuilder()
-                      .setMessageId("12345")
-                      .putMessageAttributes("event.id", "test")
-                      .setMessageData(ByteString.copyFromUtf8("ok"))
-                      .setReceivedAt(Timestamps.fromSeconds(123456))
-                      .setError("bad vibes")
-                      .setEvent(Event.newBuilder().setId("test").build())
-                      .build();
+            .setMessageId("12345")
+            .putMessageAttributes("event.id", "test")
+            .setMessageData(ByteString.copyFromUtf8("ok"))
+            .setReceivedAt(Timestamps.fromSeconds(123456))
+            .setError("bad vibes")
+            .setEvent(Event.newBuilder().setId("test").build())
+            .build();
 
     var row = f.apply(new AvroWriteRequest<>(message, schema));
     assertEquals(
