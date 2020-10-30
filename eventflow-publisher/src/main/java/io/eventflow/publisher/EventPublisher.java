@@ -7,6 +7,7 @@ import com.google.protobuf.util.Timestamps;
 import com.google.pubsub.v1.PubsubMessage;
 import io.eventflow.common.Constants;
 import io.eventflow.common.pb.Event;
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.Clock;
 
@@ -15,6 +16,10 @@ public class EventPublisher {
   private final String source;
   private final Publisher publisher;
   private final SecureRandom random;
+
+  public EventPublisher(String source, String topicName) throws IOException {
+    this(Clock.systemUTC(), source, Publisher.newBuilder(topicName).build(), new SecureRandom());
+  }
 
   public EventPublisher(Clock clock, String source, Publisher publisher, SecureRandom random) {
     this.clock = clock;
