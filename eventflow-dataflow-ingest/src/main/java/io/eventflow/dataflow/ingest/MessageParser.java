@@ -18,11 +18,11 @@ import org.apache.beam.sdk.values.TupleTag;
 public class MessageParser extends DoFn<PubsubMessage, Event> {
   private static final long serialVersionUID = -3444251307350466926L;
 
-  static TupleTag<Event> VALID =
+  static final TupleTag<Event> VALID =
       new TupleTag<>() {
         private static final long serialVersionUID = 6993653980433915514L;
       };
-  static TupleTag<InvalidMessage> INVALID =
+  static final TupleTag<InvalidMessage> INVALID =
       new TupleTag<>() {
         private static final long serialVersionUID = -8091864608888047813L;
       };

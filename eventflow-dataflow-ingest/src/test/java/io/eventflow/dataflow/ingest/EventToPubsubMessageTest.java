@@ -18,7 +18,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 public class EventToPubsubMessageTest {
-  @Rule public TestPipeline pipeline = TestPipeline.create();
+  @Rule public final TestPipeline pipeline = TestPipeline.create();
 
   @Before
   public void setUp() {

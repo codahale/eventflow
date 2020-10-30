@@ -169,6 +169,7 @@ public class IngestPipeline {
     return ProjectTopicName.format(project, s);
   }
 
+  @SuppressWarnings("unused")
   public interface Options extends DataflowPipelineOptions {
     @Description("The name of the Pub/Sub subscription to read events from.")
     @Default.String("events-ingest")

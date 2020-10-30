@@ -27,7 +27,7 @@ import org.junit.Test;
 
 public class MessageParserTest {
 
-  @Rule public TestPipeline pipeline = TestPipeline.create();
+  @Rule public final TestPipeline pipeline = TestPipeline.create();
   private final Instant instant = Instant.ofEpochSecond(12345678);
 
   @Before
