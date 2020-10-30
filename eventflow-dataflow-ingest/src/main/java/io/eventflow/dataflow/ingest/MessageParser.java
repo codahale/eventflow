@@ -119,8 +119,10 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
 
   private Event tryParse(byte[] payload) throws InvalidProtocolBufferException {
     try {
+      // First, we try parsing the payload as a binary protobuf.
       return Event.parseFrom(payload);
     } catch (InvalidProtocolBufferException e) {
+      // If this fails, we try parsing the payload as JSON.
       var builder = Event.newBuilder();
       JsonFormat.parser().merge(new String(payload, Charsets.UTF_8), builder);
       return builder.build();
