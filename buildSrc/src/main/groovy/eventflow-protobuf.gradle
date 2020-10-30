@@ -1,0 +1,20 @@
+plugins {
+    id 'java'
+    id 'com.google.protobuf'
+}
+
+def generatedJava = file("${protobuf.generatedFilesBaseDir}/main/java")
+def generatedGrpc = file("${protobuf.generatedFilesBaseDir}/main/grpc")
+
+idea {
+    module {
+        generatedSourceDirs += generatedJava
+        generatedSourceDirs += generatedGrpc
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:$protobufVersion"
+    }
+}

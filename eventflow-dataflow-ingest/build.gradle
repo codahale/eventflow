@@ -1,7 +1,7 @@
 plugins {
     id 'application'
     id 'eventflow-java'
-    id 'com.google.protobuf'
+    id 'eventflow-protobuf'
 }
 
 tasks.distTar.enabled = false
@@ -22,19 +22,4 @@ dependencies {
 
 application {
     mainClass = 'io.eventflow.dataflow.ingest.IngestPipeline'
-}
-
-def generatedJava = file("${protobuf.generatedFilesBaseDir}/main/java")
-def generatedGrpc = file("${protobuf.generatedFilesBaseDir}/main/grpc")
-idea {
-    module {
-        generatedSourceDirs += generatedJava
-        generatedSourceDirs += generatedGrpc
-    }
-}
-
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:$protobufVersion"
-    }
 }

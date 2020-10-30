@@ -1,7 +1,7 @@
 plugins {
 	id 'java-library'
 	id 'eventflow-java'
-	id 'com.google.protobuf'
+	id 'eventflow-protobuf'
 }
 
 dependencies {
@@ -9,27 +9,4 @@ dependencies {
 	api "com.google.protobuf:protobuf-java-util:$protobufVersion"
 
 	testImplementation 'junit:junit:4.13.1'
-}
-
-sourceSets {
-	main {
-		proto {
-			srcDir '../proto'
-		}
-	}
-}
-
-def generatedJava = file("${protobuf.generatedFilesBaseDir}/main/java")
-def generatedGrpc = file("${protobuf.generatedFilesBaseDir}/main/grpc")
-idea {
-	module {
-		generatedSourceDirs += generatedJava
-		generatedSourceDirs += generatedGrpc
-	}
-}
-
-protobuf {
-	protoc {
-		artifact = "com.google.protobuf:protoc:$protobufVersion"
-	}
 }
