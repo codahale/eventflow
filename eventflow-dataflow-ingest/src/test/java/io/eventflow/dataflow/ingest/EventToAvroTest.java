@@ -53,6 +53,31 @@ public class EventToAvroTest {
     assertWritable(schema, row);
   }
 
+  @Test
+  public void eventWithoutCustomer() throws IOException {
+    var event =
+        Event.newBuilder()
+             .setId("id")
+             .setType("type")
+             .setSource("source")
+             .setTimestamp(Timestamps.fromSeconds(123456))
+             .putAttributes("bool", AttributeValues.boolValue(true))
+             .putAttributes("int", AttributeValues.intValue(200))
+             .putAttributes("float", AttributeValues.floatValue(200.2))
+             .putAttributes("string", AttributeValues.stringValue("ok"))
+             .putAttributes("bytes", AttributeValues.bytesValue("yes"))
+             .putAttributes(
+                 "timestamp", AttributeValues.timestampValue(Instant.ofEpochSecond(12345)))
+             .putAttributes("duration", AttributeValues.durationValue(Duration.ofMinutes(20)))
+             .build();
+
+    var row = f.apply(new AvroWriteRequest<>(event, schema));
+    assertEquals(
+        "{\"id\": \"id\", \"type\": \"type\", \"source\": \"source\", \"customer\": null, \"timestamp\": 123456000000, \"attributes\": [{\"key\": \"bool\", \"bool_value\": true, \"int_value\": null, \"float_value\": null, \"string_value\": null, \"bytes_value\": null, \"timestamp_value\": null, \"duration_value\": null}, {\"key\": \"int\", \"bool_value\": null, \"int_value\": 200, \"float_value\": null, \"string_value\": null, \"bytes_value\": null, \"timestamp_value\": null, \"duration_value\": null}, {\"key\": \"float\", \"bool_value\": null, \"int_value\": null, \"float_value\": 200.2, \"string_value\": null, \"bytes_value\": null, \"timestamp_value\": null, \"duration_value\": null}, {\"key\": \"string\", \"bool_value\": null, \"int_value\": null, \"float_value\": null, \"string_value\": \"ok\", \"bytes_value\": null, \"timestamp_value\": null, \"duration_value\": null}, {\"key\": \"bytes\", \"bool_value\": null, \"int_value\": null, \"float_value\": null, \"string_value\": null, \"bytes_value\": {\"bytes\": \"yes\"}, \"timestamp_value\": null, \"duration_value\": null}, {\"key\": \"timestamp\", \"bool_value\": null, \"int_value\": null, \"float_value\": null, \"string_value\": null, \"bytes_value\": null, \"timestamp_value\": 12345000000, \"duration_value\": null}, {\"key\": \"duration\", \"bool_value\": null, \"int_value\": null, \"float_value\": null, \"string_value\": null, \"bytes_value\": null, \"timestamp_value\": null, \"duration_value\": 1200000000}]}",
+        row.toString());
+    assertWritable(schema, row);
+  }
+
   static void assertWritable(Schema schema, GenericRecord record) throws IOException {
     var dWriter = new GenericDatumWriter<GenericRecord>(schema);
     var fWriter = new DataFileWriter<>(dWriter);
