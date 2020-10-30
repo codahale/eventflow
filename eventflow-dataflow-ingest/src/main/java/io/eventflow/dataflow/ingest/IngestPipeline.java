@@ -86,6 +86,8 @@ public class IngestPipeline {
                 BigQueryHelpers.parseTableSpec(opts.getEventsTable()),
                 loadTableSchema("events"),
                 new EventToAvro())
+            .withTableDescription("Events which have been ingested and validated.")
+
             // Partition the events by timestamp, retaining no more than two years of data and
             // requiring a timestamp range in all queries to avoid expensive mistakes.
             .withTimePartitioning(
@@ -115,6 +117,9 @@ public class IngestPipeline {
                 BigQueryHelpers.parseTableSpec(opts.getInvalidMessagesTable()),
                 loadTableSchema("invalid_messages"),
                 new InvalidMessageToAvro())
+            .withTableDescription(
+                "Messages received by the ingest job which were not valid events.")
+
             // Partition the invalid messages by when they were received, retaining no more than two
             // months of data and requiring a timestamp range in all queries to avoid expensive
             // mistakes.
