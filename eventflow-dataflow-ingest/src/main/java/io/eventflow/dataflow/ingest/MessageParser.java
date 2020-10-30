@@ -100,11 +100,11 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
 
     for (Map.Entry<String, AttributeValue> attribute : event.getAttributesMap().entrySet()) {
       var key = attribute.getKey();
+      var value = attribute.getValue();
+
       if (key.isBlank()) {
         throw new IllegalArgumentException("blank attribute key");
       }
-
-      var value = attribute.getValue();
 
       if (value.getValueCase() == AttributeValue.ValueCase.VALUE_NOT_SET) {
         throw new IllegalArgumentException("blank value for attribute " + key);
