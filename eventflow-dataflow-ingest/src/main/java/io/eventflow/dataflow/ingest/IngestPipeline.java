@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
+import io.eventflow.common.Constants;
 import io.eventflow.common.pb.Event;
 import io.eventflow.ingest.pb.InvalidMessage;
 import java.io.IOException;
@@ -30,7 +31,6 @@ import org.apache.beam.sdk.values.TupleTagList;
 import org.joda.time.Duration;
 
 public class IngestPipeline {
-  static final String ID_ATTRIBUTE = "event.id";
 
   public static void main(String[] args) throws IOException {
     var opts = PipelineOptionsFactory.fromArgs(args).withValidation().as(Options.class);
@@ -50,7 +50,7 @@ public class IngestPipeline {
                 "Read From Pub/Sub",
                 PubsubIO.readMessagesWithAttributes()
                     .fromSubscription(parseSubscription(opts.getProject(), opts.getSubscription()))
-                    .withIdAttribute(ID_ATTRIBUTE))
+                    .withIdAttribute(Constants.ID_ATTRIBUTE))
 
             // Parse the message data as binary or JSON-encoded Event protobufs and validate their
             // fields. Valid events are output with the VALID tag, invalid messages are encoded as

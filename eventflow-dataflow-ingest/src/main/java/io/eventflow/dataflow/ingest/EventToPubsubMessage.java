@@ -1,6 +1,7 @@
 package io.eventflow.dataflow.ingest;
 
 import com.google.protobuf.util.Timestamps;
+import io.eventflow.common.Constants;
 import io.eventflow.common.pb.Event;
 import java.util.HashMap;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
@@ -14,7 +15,7 @@ public class EventToPubsubMessage extends DoFn<Event, PubsubMessage> {
     var event = c.element();
 
     var attributes = new HashMap<String, String>();
-    attributes.put(IngestPipeline.ID_ATTRIBUTE, event.getId());
+    attributes.put(Constants.ID_ATTRIBUTE, event.getId());
     attributes.put("event.type", event.getType());
     attributes.put("event.source", event.getSource());
     attributes.put("event.timestamp", Timestamps.toString(event.getTimestamp()));

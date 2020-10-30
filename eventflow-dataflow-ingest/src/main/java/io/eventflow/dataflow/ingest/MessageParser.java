@@ -5,6 +5,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import com.google.protobuf.util.Timestamps;
+import io.eventflow.common.Constants;
 import io.eventflow.common.pb.AttributeValue;
 import io.eventflow.common.pb.Event;
 import io.eventflow.ingest.pb.InvalidMessage;
@@ -77,7 +78,7 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
       throw new IllegalArgumentException("blank event id");
     }
 
-    var idAttribute = message.getAttribute(IngestPipeline.ID_ATTRIBUTE);
+    var idAttribute = message.getAttribute(Constants.ID_ATTRIBUTE);
     if (!event.getId().equals(idAttribute)) {
       throw new IllegalArgumentException("event id/attribute mismatch");
     }
