@@ -15,6 +15,7 @@ public class TimeseriesServer {
     this.server = ServerBuilder.forPort(port).addService(new TimeseriesImpl(spanner)).build();
   }
 
+  @SuppressWarnings("CatchAndPrintStackTrace")
   public void start() throws IOException {
     server.start();
     Runtime.getRuntime()
