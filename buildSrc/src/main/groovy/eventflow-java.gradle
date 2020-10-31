@@ -21,4 +21,8 @@ spotless {
             exclude '**/build/generated/**'
         }
     }
+
+    groovyGradle {
+        greclipse()
+    }
 }
