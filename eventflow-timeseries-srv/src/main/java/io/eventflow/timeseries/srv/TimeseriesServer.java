@@ -47,9 +47,9 @@ public class TimeseriesServer {
 
   public static void main(String[] args) throws IOException, InterruptedException {
     // TODO read params from args
-    var project = "";
-    var instanceId = "";
-    var database = "";
+    var project = "your-project-id";
+    var instanceId = "test-instance";
+    var database = "timeseries";
     var port = 8080;
 
     try (var spanner = SpannerOptions.newBuilder().build().getService()) {
