@@ -9,7 +9,8 @@ import io.eventflow.timeseries.api.GetRequest;
 import io.eventflow.timeseries.api.GetResponse;
 import io.eventflow.timeseries.api.TimeseriesGrpc;
 import io.grpc.stub.StreamObserver;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +27,7 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
 
   @Override
   public void get(GetRequest request, StreamObserver<GetResponse> responseObserver) {
+    var zoneId = ZoneId.of(request.getTimeZone());
     var statement =
         Statement.newBuilder(QUERY_FRONT)
             .append(aggFunc(request.getAggregation()))
@@ -46,9 +48,10 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
       var resp = GetResponse.newBuilder();
       while (results.next()) {
         resp.addTimestamps(
-            DateTimeFormatter.ISO_ZONED_DATE_TIME
-                .parse(results.getString(0), Instant::from)
-                .getEpochSecond());
+            DateTimeFormatter.ISO_LOCAL_DATE
+                .parse(results.getString(0), LocalDateTime::from)
+                .atZone(zoneId)
+                .toEpochSecond());
         resp.addValues(results.getLong(1));
       }
       responseObserver.onNext(resp.build());
@@ -61,15 +64,15 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
       case GRAN_UNKNOWN:
         throw new IllegalArgumentException("missing granularity");
       case GRAN_MINUTE:
-        return "%E4Y-%m-%dT%H:%M:00%Ez[%Z]";
+        return "%E4Y-%m-%dT%H:%M:00";
       case GRAN_HOUR:
-        return "%E4Y-%m-%dT%H:00:00%Ez[%Z]";
+        return "%E4Y-%m-%dT%H:00:00";
       case GRAN_DAY:
-        return "%E4Y-%m-%dT00:00:00%Ez[%Z]";
+        return "%E4Y-%m-%dT00:00:00";
       case GRAN_MONTH:
-        return "%E4Y-%m-01T00:00:00%Ez[%Z]";
+        return "%E4Y-%m-01T00:00:00";
       case GRAN_YEAR:
-        return "%E4Y-01-01T00:00:00%Ez[%Z]";
+        return "%E4Y-01-01T00:00:00";
       default:
         throw new IllegalArgumentException("unrecognized granularity");
     }
