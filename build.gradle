@@ -17,5 +17,3 @@ spotless {
 		greclipse()
 	}
 }
-
-build.dependsOn 'spotlessApply'
