@@ -11,6 +11,7 @@ import io.eventflow.common.pb.Event;
 import io.eventflow.ingest.pb.InvalidMessage;
 import java.time.Clock;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.values.TupleTag;
@@ -37,27 +38,8 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
   public void processElement(ProcessContext c) {
     var instant = clock.instant();
     var message = c.element();
-    try {
-      var event = tryParse(message.getPayload());
-      try {
-        validateEvent(event, message);
-        c.output(VALID, event);
-      } catch (IllegalArgumentException e) {
-        c.output(
-            INVALID,
-            InvalidMessage.newBuilder()
-                .setMessageId(message.getMessageId())
-                .putAllMessageAttributes(message.getAttributeMap())
-                .setMessageData(ByteString.copyFrom(message.getPayload()))
-                .setReceivedAt(
-                    com.google.protobuf.Timestamp.newBuilder()
-                        .setSeconds(instant.getEpochSecond())
-                        .setNanos(instant.getNano()))
-                .setError(e.getMessage())
-                .setEvent(event)
-                .build());
-      }
-    } catch (InvalidProtocolBufferException e) {
+    var event = parse(message.getPayload());
+    if (event == null) {
       c.output(
           INVALID,
           InvalidMessage.newBuilder()
@@ -70,33 +52,55 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
                       .setNanos(instant.getNano()))
               .setError("invalid protobuf")
               .build());
+      return;
     }
+
+    var error = validateEvent(event, message);
+    if (error != null) {
+      c.output(
+          INVALID,
+          InvalidMessage.newBuilder()
+              .setMessageId(message.getMessageId())
+              .putAllMessageAttributes(message.getAttributeMap())
+              .setMessageData(ByteString.copyFrom(message.getPayload()))
+              .setReceivedAt(
+                  com.google.protobuf.Timestamp.newBuilder()
+                      .setSeconds(instant.getEpochSecond())
+                      .setNanos(instant.getNano()))
+              .setError(error)
+              .setEvent(event)
+              .build());
+      return;
+    }
+
+    c.output(VALID, event);
   }
 
-  private void validateEvent(Event event, PubsubMessage message) {
+  @Nullable
+  private String validateEvent(Event event, PubsubMessage message) {
     if (event.getId().isBlank()) {
-      throw new IllegalArgumentException("blank event id");
+      return "blank event id";
     }
 
     var idAttribute = message.getAttribute(Constants.ID_ATTRIBUTE);
     if (!event.getId().equals(idAttribute)) {
-      throw new IllegalArgumentException("event id/attribute mismatch");
+      return "event id/attribute mismatch";
     }
 
     if (event.getType().isBlank()) {
-      throw new IllegalArgumentException("blank event type");
+      return "blank event type";
     }
 
     if (event.getSource().isBlank()) {
-      throw new IllegalArgumentException("blank event source");
+      return "blank event source";
     }
 
     if (!event.hasTimestamp() || !Timestamps.isValid(event.getTimestamp())) {
-      throw new IllegalArgumentException("invalid event timestamp");
+      return "invalid event timestamp";
     }
 
     if (event.getAttributesCount() == 0) {
-      throw new IllegalArgumentException("no event attributes");
+      return "no event attributes";
     }
 
     for (Map.Entry<String, AttributeValue> attribute : event.getAttributesMap().entrySet()) {
@@ -104,29 +108,37 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
       var value = attribute.getValue();
 
       if (key.isBlank()) {
-        throw new IllegalArgumentException("blank attribute key");
+        return "blank attribute key";
       }
 
       if (value.getValueCase() == AttributeValue.ValueCase.VALUE_NOT_SET) {
-        throw new IllegalArgumentException("blank value for attribute " + key);
+        return "blank value for attribute " + key;
       }
 
       if (value.getValueCase() == AttributeValue.ValueCase.TIMESTAMP_VALUE
           && !Timestamps.isValid(value.getTimestampValue())) {
-        throw new IllegalArgumentException("invalid timestamp value for attribute " + key);
+        return "invalid timestamp value for attribute " + key;
       }
     }
+
+    return null;
   }
 
-  private Event tryParse(byte[] payload) throws InvalidProtocolBufferException {
+  @Nullable
+  private Event parse(byte[] payload) {
     try {
       // First, we try parsing the payload as a binary protobuf.
       return Event.parseFrom(payload);
     } catch (InvalidProtocolBufferException e) {
-      // If this fails, we try parsing the payload as JSON.
-      var builder = Event.newBuilder();
-      JsonFormat.parser().merge(new String(payload, Charsets.UTF_8), builder);
-      return builder.build();
+      try {
+        // If this fails, we try parsing the payload as JSON.
+        var builder = Event.newBuilder();
+        JsonFormat.parser().merge(new String(payload, Charsets.UTF_8), builder);
+        return builder.build();
+      } catch (InvalidProtocolBufferException e2) {
+        // If we can't parse it as either protobuf or JSON, then oh well.
+        return null;
+      }
     }
   }
 }
