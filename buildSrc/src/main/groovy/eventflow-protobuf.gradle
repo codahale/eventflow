@@ -18,4 +18,17 @@ protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:$protobufVersion"
     }
+
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:$grpcVersion"
+        }
+    }
+
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
 }
+

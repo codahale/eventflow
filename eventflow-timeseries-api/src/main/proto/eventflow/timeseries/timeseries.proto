@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package eventflow.timeseries;
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "io.eventflow.timeseries.api";
+option java_outer_classname = "TimeseriesPB";
+option java_multiple_files = true;
+
+service Timeseries {
+  rpc Get (GetRequest) returns (GetResponse) {
+  }
+}
+
+message GetRequest {
+  enum Granularity {
+    GRAN_UNKNOWN = 0;
+    GRAN_MINUTE = 1;
+    GRAN_HOUR = 2;
+    GRAN_DAY = 3;
+    GRAN_WEEK = 4;
+    GRAN_MONTH = 5;
+    GRAN_YEAR = 6;
+  }
+
+  enum Aggregation {
+    AGG_UNKNOWN = 0;
+    AGG_SUM = 1;
+    AGG_MAX = 2;
+    AGG_MIN = 3;
+    AGG_AVG = 4;
+  }
+
+  // The name of the time series to retrieve.
+  string name = 1;
+
+  // The beginning of the range to retrieve, inclusive.
+  google.protobuf.Timestamp start = 2;
+
+  // The end of the range to retrieve, exclusive.
+  google.protobuf.Timestamp end = 3;
+
+  // The name of the time zone in which date/time operations will be performed.
+  string time_zone = 4;
+
+  // The level of granularity of intervals to return.
+  Granularity granularity = 5;
+
+  // The aggregation function to be used for the measurements in each interval.
+  Aggregation aggregation = 6;
+}
+
+message GetResponse {
+  // The epoch second timestamps indicating the beginning of the intervals. These are represented
+  // as int64 values so that responses will benefit from packed encoding.
+  repeated int64 timestamps = 2;
+
+  // The values of the intervals, corresponding in index to timestamps.
+  repeated int64 values = 3;
+}
+
