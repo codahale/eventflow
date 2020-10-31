@@ -12,8 +12,31 @@ plugins {
 	id 'com.google.protobuf' version '0.8.13'
 }
 
-spotless {
-	groovyGradle {
-		greclipse()
+allprojects { p ->
+	p.apply plugin: 'idea'
+	p.apply plugin: 'java'
+	p.apply plugin: 'com.diffplug.spotless'
+
+	repositories {
+		mavenCentral()
+	}
+
+	compileJava {
+		sourceCompatibility = 11
+		targetCompatibility = 11
+	}
+
+	spotless {
+		java {
+			googleJavaFormat('1.9')
+			target project.fileTree(project.projectDir) {
+				include '**/*.java'
+				exclude '**/build/**'
+			}
+		}
+
+		groovyGradle {
+			greclipse()
+		}
 	}
 }
