@@ -15,6 +15,10 @@ compileJava {
 
 spotless {
     java {
-        googleJavaFormat()
+        googleJavaFormat('1.9')
+        target project.fileTree(project.projectDir) {
+            include '**/*.java'
+            exclude '**/build/generated/**'
+        }
     }
 }
