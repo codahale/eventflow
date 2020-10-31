@@ -2,27 +2,35 @@ package io.eventflow.timeseries.api;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.util.Timestamps;
+import io.eventflow.timeseries.api.GetRequest.Aggregation;
+import io.eventflow.timeseries.api.GetRequest.Granularity;
+import io.eventflow.timeseries.api.TimeseriesGrpc.TimeseriesBlockingStub;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 public class TimeseriesClient {
-  private final TimeseriesGrpc.TimeseriesBlockingStub stub;
+  private final TimeseriesBlockingStub stub;
 
-  public TimeseriesClient(TimeseriesGrpc.TimeseriesBlockingStub stub) {
+  public TimeseriesClient(TimeseriesBlockingStub stub) {
     this.stub = stub;
   }
 
   public ImmutableMap<ZonedDateTime, Long> get(
-      String name, Instant start, Instant end, ZoneId timeZone) {
+      String name,
+      Instant start,
+      Instant end,
+      ZoneId timeZone,
+      Granularity granularity,
+      Aggregation aggregation) {
     var req =
         GetRequest.newBuilder()
             .setName(name)
             .setStart(Timestamps.fromSeconds(start.getEpochSecond()))
             .setEnd(Timestamps.fromSeconds(end.getEpochSecond()))
             .setTimeZone(timeZone.getId())
-            .setGranularity(GetRequest.Granularity.GRAN_MINUTE)
-            .setAggregation(GetRequest.Aggregation.AGG_SUM)
+            .setGranularity(granularity)
+            .setAggregation(aggregation)
             .build();
     var resp = stub.get(req);
     var results =
