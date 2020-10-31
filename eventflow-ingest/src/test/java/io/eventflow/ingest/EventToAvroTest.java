@@ -1,4 +1,4 @@
-package io.eventflow.dataflow.ingest;
+package io.eventflow.ingest;
 
 import static org.junit.Assert.assertEquals;
 

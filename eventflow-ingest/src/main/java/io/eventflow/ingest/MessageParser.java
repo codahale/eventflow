@@ -1,4 +1,4 @@
-package io.eventflow.dataflow.ingest;
+package io.eventflow.ingest;
 
 import com.google.common.base.Charsets;
 import com.google.protobuf.ByteString;

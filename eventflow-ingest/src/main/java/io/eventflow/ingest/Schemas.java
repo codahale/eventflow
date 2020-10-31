@@ -1,4 +1,4 @@
-package io.eventflow.dataflow.ingest;
+package io.eventflow.ingest;
 
 import com.google.api.services.bigquery.model.TableSchema;
 import com.google.common.base.Charsets;

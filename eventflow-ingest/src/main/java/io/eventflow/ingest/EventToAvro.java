@@ -1,4 +1,4 @@
-package io.eventflow.dataflow.ingest;
+package io.eventflow.ingest;
 
 import com.google.protobuf.util.Durations;
 import com.google.protobuf.util.Timestamps;

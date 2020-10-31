@@ -1,4 +1,4 @@
-package io.eventflow.dataflow.ingest;
+package io.eventflow.ingest;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;

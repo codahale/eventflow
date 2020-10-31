@@ -1,6 +1,6 @@
-package io.eventflow.dataflow.ingest;
+package io.eventflow.ingest;
 
-import static io.eventflow.dataflow.ingest.EventToAvroTest.assertWritable;
+import static io.eventflow.ingest.EventToAvroTest.assertWritable;
 import static org.junit.Assert.assertEquals;
 
 import com.google.protobuf.ByteString;
