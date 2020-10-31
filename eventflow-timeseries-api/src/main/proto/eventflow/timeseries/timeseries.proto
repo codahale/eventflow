@@ -56,6 +56,6 @@ message GetResponse {
   repeated int64 timestamps = 2;
 
   // The values of the intervals, corresponding in index to timestamps.
-  repeated int64 values = 3;
+  repeated double values = 3;
 }
 

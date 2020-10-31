@@ -15,10 +15,22 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
 
 public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
-
-  public static final String QUERY_FRONT = "SELECT FORMAT_TIMESTAMP(@fmt, timestamp, @tz), ";
-  private static final String QUERY_BACK =
-      "(value) FROM intervals_minutely WHERE timestamp BETWEEN @start AND @end GROUP BY 1 ORDER BY 1";
+  /*
+   CREATE TABLE intervals_minutely (
+     name STRING(1000) NOT NULL,
+     interval_ts TIMESTAMP NOT NULL,
+     insert_id INT64 NOT NULL,
+     value INT64 NOT NULL,
+     insert_ts TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true)
+   ) PRIMARY KEY (name, interval_ts, insert_id)
+  */
+  private static final String QUERY_FRONT =
+      "WITH intermediate AS ("
+          + " SELECT interval_ts, CAST(SUM(value) AS FLOAT64) AS value"
+          + " FROM intervals_minutely WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1"
+          + " )"
+          + " SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), ";
+  private static final String QUERY_BACK = "(value) FROM intermediate GROUP BY 1 ORDER BY 1";
   private final DatabaseClient spanner;
 
   public TimeseriesImpl(DatabaseClient spanner) {
@@ -32,6 +44,8 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
         Statement.newBuilder(QUERY_FRONT)
             .append(aggFunc(request.getAggregation()))
             .append(QUERY_BACK)
+            .bind("name")
+            .to(request.getName())
             .bind("fmt")
             .to(granFmt(request.getGranularity()))
             .bind("tz")
@@ -41,18 +55,19 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
             .bind("end")
             .to(Timestamp.ofTimeMicroseconds(Timestamps.toMicros(request.getEnd())))
             .build();
+    System.out.println(statement);
     try (var results =
         spanner
-            .readOnlyTransaction(TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES))
+            .singleUseReadOnlyTransaction(TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES))
             .executeQuery(statement)) {
       var resp = GetResponse.newBuilder();
       while (results.next()) {
         resp.addTimestamps(
-            DateTimeFormatter.ISO_LOCAL_DATE
+            DateTimeFormatter.ISO_LOCAL_DATE_TIME
                 .parse(results.getString(0), LocalDateTime::from)
                 .atZone(zoneId)
                 .toEpochSecond());
-        resp.addValues(results.getLong(1));
+        resp.addValues(results.getDouble(1));
       }
       responseObserver.onNext(resp.build());
       responseObserver.onCompleted();

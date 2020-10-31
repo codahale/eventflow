@@ -16,7 +16,7 @@ public class TimeseriesClient {
     this.stub = stub;
   }
 
-  public ImmutableMap<ZonedDateTime, Long> get(
+  public ImmutableMap<ZonedDateTime, Double> get(
       String name,
       Instant start,
       Instant end,
@@ -34,7 +34,7 @@ public class TimeseriesClient {
             .build();
     var resp = stub.get(req);
     var results =
-        ImmutableMap.<ZonedDateTime, Long>builderWithExpectedSize(resp.getTimestampsCount());
+        ImmutableMap.<ZonedDateTime, Double>builderWithExpectedSize(resp.getTimestampsCount());
     for (int i = 0; i < resp.getTimestampsCount(); i++) {
       results.put(Instant.ofEpochSecond(resp.getTimestamps(i)).atZone(timeZone), resp.getValues(i));
     }

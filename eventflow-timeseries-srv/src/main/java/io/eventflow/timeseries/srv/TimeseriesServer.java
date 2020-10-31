@@ -18,6 +18,7 @@ public class TimeseriesServer {
   @SuppressWarnings("CatchAndPrintStackTrace")
   public void start() throws IOException {
     server.start();
+    System.out.println("server is running");
     Runtime.getRuntime()
         .addShutdownHook(
             new Thread(
