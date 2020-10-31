@@ -1,0 +1,20 @@
+plugins {
+	id 'application'
+}
+
+tasks.distTar.enabled = false
+tasks.distZip.enabled = false
+
+dependencies {
+	implementation project(':eventflow-timeseries-api')
+	implementation "com.google.protobuf:protobuf-java:$protobufVersion"
+	implementation "com.google.protobuf:protobuf-java-util:$protobufVersion"
+	implementation "io.grpc:grpc-all:$grpcVersion"
+	implementation 'com.google.cloud:google-cloud-spanner:3.0.1'
+
+	testImplementation "junit:junit:$junitVersion"
+}
+
+application {
+	mainClass = 'io.eventflow.timeseries.srv.TimeseriesServer'
+}

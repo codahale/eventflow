@@ -19,7 +19,6 @@ message GetRequest {
     GRAN_MINUTE = 1;
     GRAN_HOUR = 2;
     GRAN_DAY = 3;
-    GRAN_WEEK = 4;
     GRAN_MONTH = 5;
     GRAN_YEAR = 6;
   }
