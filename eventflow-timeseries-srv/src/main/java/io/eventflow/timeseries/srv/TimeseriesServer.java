@@ -3,6 +3,7 @@ package io.eventflow.timeseries.srv;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.SpannerOptions;
+import com.google.common.io.Resources;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.opencensus.common.Duration;
@@ -11,9 +12,12 @@ import io.opencensus.exporter.stats.stackdriver.StackdriverStatsConfiguration;
 import io.opencensus.exporter.stats.stackdriver.StackdriverStatsExporter;
 import io.opencensus.exporter.trace.stackdriver.StackdriverTraceConfiguration;
 import io.opencensus.exporter.trace.stackdriver.StackdriverTraceExporter;
+import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.Tracing;
 import io.opencensus.trace.samplers.Samplers;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 public class TimeseriesServer {
@@ -80,13 +84,28 @@ public class TimeseriesServer {
 
     // Export traces to Stackdriver.
     StackdriverTraceExporter.createAndRegister(
-        StackdriverTraceConfiguration.builder().setProjectId(project).build());
+        StackdriverTraceConfiguration.builder()
+            .setProjectId(project)
+            .setFixedAttributes(
+                Map.of("git-version", AttributeValue.stringAttributeValue(gitVersion())))
+            .build());
 
     try (var spanner = SpannerOptions.newBuilder().build().getService()) {
       var client = spanner.getDatabaseClient(DatabaseId.of(project, instance, database));
       var server = new TimeseriesServer(client, port);
       server.start();
       server.blockUntilShutdown();
+    }
+  }
+
+  private static String gitVersion() {
+    try {
+      var url = Resources.getResource("git.properties");
+      var props = new Properties();
+      props.load(url.openStream());
+      return props.getProperty("git.commit.id.abbrev");
+    } catch (IOException e) {
+      return "unknown";
     }
   }
 }
