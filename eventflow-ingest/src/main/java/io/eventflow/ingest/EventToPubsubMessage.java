@@ -23,6 +23,6 @@ public class EventToPubsubMessage extends DoFn<Event, PubsubMessage> {
       attributes.put("event.customer", event.getCustomer().getValue());
     }
 
-    c.output(new PubsubMessage(event.toByteArray(), attributes));
+    c.output(new PubsubMessage(event.toByteArray(), attributes, ""));
   }
 }

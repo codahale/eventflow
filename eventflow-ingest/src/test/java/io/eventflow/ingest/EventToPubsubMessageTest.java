@@ -8,7 +8,7 @@ import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.pb.Event;
 import java.util.HashMap;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
-import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesCoder;
+import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesAndMessageIdCoder;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
@@ -24,7 +24,7 @@ public class EventToPubsubMessageTest {
   public void setUp() {
     pipeline
         .getCoderRegistry()
-        .registerCoderForClass(PubsubMessage.class, PubsubMessageWithAttributesCoder.of());
+        .registerCoderForClass(PubsubMessage.class, PubsubMessageWithAttributesAndMessageIdCoder.of());
   }
 
   @Test
