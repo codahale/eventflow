@@ -1,5 +1,7 @@
 package io.eventflow.timeseries.srv;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.SpannerOptions;
@@ -47,17 +49,35 @@ public class TimeseriesServer {
   }
 
   public static void main(String[] args) throws IOException, InterruptedException {
-    // TODO read params from args
-    var project = "your-project-id";
-    var instanceId = "test-instance";
-    var database = "timeseries";
-    var port = 8080;
+    var params = new Params();
+    JCommander.newBuilder().addObject(params).build().parse(args);
+    var database = DatabaseId.of(params.project, params.instance, params.database);
 
     try (var spanner = SpannerOptions.newBuilder().build().getService()) {
-      var client = spanner.getDatabaseClient(DatabaseId.of(project, instanceId, database));
-      var server = new TimeseriesServer(client, port);
+      var client = spanner.getDatabaseClient(database);
+      var server = new TimeseriesServer(client, params.port);
       server.start();
       server.blockUntilShutdown();
     }
+  }
+
+  private static class Params {
+    @Parameter(
+        names = {"--project", "-p"},
+        required = true)
+    String project;
+
+    @Parameter(
+        names = {"--instance", "-i"},
+        required = true)
+    String instance;
+
+    @Parameter(
+        names = {"--database", "-d"},
+        required = true)
+    String database;
+
+    @Parameter(names = {"--port"})
+    int port = 8080;
   }
 }

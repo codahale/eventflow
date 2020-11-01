@@ -11,6 +11,7 @@ dependencies {
 	implementation "com.google.protobuf:protobuf-java-util:$protobufVersion"
 	implementation "io.grpc:grpc-all:$grpcVersion"
 	implementation 'com.google.cloud:google-cloud-spanner:3.0.1'
+	implementation 'com.beust:jcommander:1.78'
 
 	testImplementation "junit:junit:$junitVersion"
 }
