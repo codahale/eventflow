@@ -5,6 +5,14 @@ import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.SpannerOptions;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.opencensus.common.Duration;
+import io.opencensus.contrib.grpc.metrics.RpcViews;
+import io.opencensus.exporter.stats.stackdriver.StackdriverStatsConfiguration;
+import io.opencensus.exporter.stats.stackdriver.StackdriverStatsExporter;
+import io.opencensus.exporter.trace.stackdriver.StackdriverTraceConfiguration;
+import io.opencensus.exporter.trace.stackdriver.StackdriverTraceExporter;
+import io.opencensus.trace.Tracing;
+import io.opencensus.trace.samplers.Samplers;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -55,10 +63,27 @@ public class TimeseriesServer {
       port = Integer.parseInt(args[3]);
     }
 
-    var dbId = DatabaseId.of(project, instance, database);
+    // Register all gRPC views and enable stats.
+    RpcViews.registerAllGrpcViews();
+
+    // Trace every call.
+    var traceConfig = Tracing.getTraceConfig();
+    traceConfig.updateActiveTraceParams(
+        traceConfig.getActiveTraceParams().toBuilder().setSampler(Samplers.alwaysSample()).build());
+
+    // Export stats to Stackdriver every 5s.
+    StackdriverStatsExporter.createAndRegister(
+        StackdriverStatsConfiguration.builder()
+            .setProjectId(project)
+            .setExportInterval(Duration.create(5, 0))
+            .build());
+
+    // Export traces to Stackdriver.
+    StackdriverTraceExporter.createAndRegister(
+        StackdriverTraceConfiguration.builder().setProjectId(project).build());
 
     try (var spanner = SpannerOptions.newBuilder().build().getService()) {
-      var client = spanner.getDatabaseClient(dbId);
+      var client = spanner.getDatabaseClient(DatabaseId.of(project, instance, database));
       var server = new TimeseriesServer(client, port);
       server.start();
       server.blockUntilShutdown();
