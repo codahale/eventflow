@@ -24,7 +24,8 @@ public class EventToPubsubMessageTest {
   public void setUp() {
     pipeline
         .getCoderRegistry()
-        .registerCoderForClass(PubsubMessage.class, PubsubMessageWithAttributesAndMessageIdCoder.of());
+        .registerCoderForClass(
+            PubsubMessage.class, PubsubMessageWithAttributesAndMessageIdCoder.of());
   }
 
   @Test
