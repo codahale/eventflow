@@ -60,10 +60,9 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
    CREATE TABLE intervals_minutes (
      name STRING(1000) NOT NULL,
      interval_ts TIMESTAMP NOT NULL,
-     insert_id INT64 NOT NULL,
+     insert_ts TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),
      value FLOAT64 NOT NULL,
-     insert_ts TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true)
-   ) PRIMARY KEY (name, interval_ts, insert_id)
+   ) PRIMARY KEY (name, interval_ts, insert_ts)
   */
 
   private String query(GetRequest.Aggregation aggregation) {

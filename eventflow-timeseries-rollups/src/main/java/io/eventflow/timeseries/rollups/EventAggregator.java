@@ -123,12 +123,10 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
               .to(c.element().getKey().getKey())
               .set("interval_ts")
               .to(ts)
-              .set("insert_id")
-              .to(c.timestamp().getMillis())
-              .set("value")
-              .to(c.element().getValue())
               .set("insert_ts")
               .to(Value.COMMIT_TIMESTAMP)
+              .set("value")
+              .to(c.element().getValue())
               .build());
     }
   }
