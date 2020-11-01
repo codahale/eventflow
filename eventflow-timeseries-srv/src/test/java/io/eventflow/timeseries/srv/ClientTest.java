@@ -30,21 +30,21 @@ public class ClientTest {
     System.out.println(
         "hourly sums: "
             + client.get(
-            "example",
-            start,
-            end,
-            ZoneId.systemDefault(),
-            GetRequest.Granularity.GRAN_HOUR,
-            GetRequest.Aggregation.AGG_SUM));
+                "example",
+                start,
+                end,
+                ZoneId.systemDefault(),
+                GetRequest.Granularity.GRAN_HOUR,
+                GetRequest.Aggregation.AGG_SUM));
 
     System.out.println(
         "minutely sums: "
             + client.get(
-            "example",
-            start,
-            end,
-            ZoneId.systemDefault(),
-            GetRequest.Granularity.GRAN_HOUR,
-            GetRequest.Aggregation.AGG_SUM));
+                "example",
+                start,
+                end,
+                ZoneId.systemDefault(),
+                GetRequest.Granularity.GRAN_HOUR,
+                GetRequest.Aggregation.AGG_SUM));
   }
 }
