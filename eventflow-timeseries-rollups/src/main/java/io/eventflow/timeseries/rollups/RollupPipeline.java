@@ -50,19 +50,21 @@ public class RollupPipeline {
                   @ProcessElement
                   public void processElement(ProcessContext c) {
                     var event = c.element();
+                    c.output(KV.of(name(event), truncate(event.getTimestamp())));
+                  }
 
-                    var name = event.getType();
+                  private String name(Event event) {
                     if (event.hasCustomer()) {
-                      name = name + "." + event.getCustomer().getValue();
+                      return event.getType() + "." + event.getCustomer().getValue();
                     }
+                    return event.getType();
+                  }
 
-                    var ts =
-                        Instant.ofEpochMilli(Timestamps.toMillis(event.getTimestamp()))
-                                .truncatedTo(ChronoUnit.MINUTES)
-                                .toEpochMilli()
-                            * 1000;
-
-                    c.output(KV.of(name, ts));
+                  private long truncate(com.google.protobuf.Timestamp timestamp) {
+                    return Instant.ofEpochMilli(Timestamps.toMillis(timestamp))
+                            .truncatedTo(ChronoUnit.MINUTES)
+                            .toEpochMilli()
+                        * 1000;
                   }
                 }))
         .apply("Window By Minute", Window.into(FixedWindows.of(Duration.standardMinutes(1))))
