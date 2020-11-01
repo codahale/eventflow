@@ -94,7 +94,7 @@ public class RollupPipeline {
                             .set("insert_id")
                             .to(random.nextLong())
                             .set("value")
-                            .to(count)
+                            .to(count.doubleValue())
                             .set("insert_ts")
                             .to(Value.COMMIT_TIMESTAMP)
                             .build());
