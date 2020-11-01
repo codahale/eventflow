@@ -18,8 +18,6 @@ import com.google.common.collect.ImmutableMap;
 import io.eventflow.timeseries.api.GetRequest;
 import io.eventflow.timeseries.api.TimeseriesClient;
 import io.eventflow.timeseries.api.TimeseriesGrpc;
-import io.grpc.ManagedChannel;
-import io.grpc.Server;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.testing.GrpcCleanupRule;
@@ -29,32 +27,26 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
 public class TimeseriesImplTest {
   private final DatabaseClient spanner = mock(DatabaseClient.class);
-  private final TimeseriesImpl impl = new TimeseriesImpl(spanner);
   @Rule public GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
   private final String serverName = InProcessServerBuilder.generateName();
-  private final Server server =
-      grpcCleanup.register(
-          InProcessServerBuilder.forName(serverName)
-              .directExecutor()
-              .addService(impl)
-              .build()
-              .start());
-  private final ManagedChannel channel =
-      grpcCleanup.register(InProcessChannelBuilder.forName(serverName).directExecutor().build());
   private final TimeseriesClient client =
-      new TimeseriesClient(TimeseriesGrpc.newBlockingStub(channel));
+      new TimeseriesClient(
+          TimeseriesGrpc.newBlockingStub(
+              grpcCleanup.register(
+                  InProcessChannelBuilder.forName(serverName).directExecutor().build())));
 
-  public TimeseriesImplTest() throws IOException {}
-
-  @After
-  public void tearDown() {
-    server.shutdownNow();
+  public TimeseriesImplTest() throws IOException {
+    grpcCleanup.register(
+        InProcessServerBuilder.forName(serverName)
+            .directExecutor()
+            .addService(new TimeseriesImpl(spanner))
+            .build()
+            .start());
   }
 
   @Test
