@@ -67,6 +67,12 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
   */
 
   private String query(GetRequest.Aggregation aggregation) {
+    // Because there may be multiple value rows per interval, aggregation functions other than SUM
+    // use a common table expression to materialize the actual minutely intervals in order to be
+    // correct. For example, if one interval has two rows of 10 and 20, and another interval has one
+    // row of 21, the MAX of those two intervals should be 30, not 21. But because SUM is what's
+    // needed to aggregate the value rows, we can special-case SUM queries to avoid the overhead of
+    // the CTE.
     if (aggregation == GetRequest.Aggregation.AGG_SUM) {
       return "SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), SUM(value) AS value"
           + " FROM intervals_minutes "
