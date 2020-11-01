@@ -50,18 +50,18 @@ public class TimeseriesImplTest {
         .thenReturn(
             ResultSets.forRows(
                 Type.struct(
-                    Type.StructField.of("n0", Type.string()),
+                    Type.StructField.of("n0", Type.timestamp()),
                     Type.StructField.of("n1", Type.float64())),
                 List.of(
                     Struct.newBuilder()
                         .set("n0")
-                        .to("2020-10-30T00:00:00")
+                        .to(Timestamp.parseTimestamp("2020-10-30T00:00:00Z"))
                         .set("n1")
                         .to(123.4d)
                         .build(),
                     Struct.newBuilder()
                         .set("n0")
-                        .to("2020-10-30T00:01:00")
+                        .to(Timestamp.parseTimestamp("2020-10-30T00:01:00"))
                         .set("n1")
                         .to(56.789d)
                         .build())));
@@ -80,18 +80,16 @@ public class TimeseriesImplTest {
 
     assertEquals(
         ImmutableMap.of(
-            ZonedDateTime.of(2020, 10, 30, 0, 0, 0, 0, timeZone), 123.4d,
-            ZonedDateTime.of(2020, 10, 30, 0, 1, 0, 0, timeZone), 56.789d),
+            ZonedDateTime.of(2020, 10, 29, 18, 0, 0, 0, timeZone), 123.4d,
+            ZonedDateTime.of(2020, 10, 29, 18, 1, 0, 0, timeZone), 56.789d),
         res);
 
     verify(tx)
         .executeQuery(
             Statement.newBuilder(
-                    "SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), SUM(value) AS value FROM intervals_minutes WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1 ORDER BY 1")
+                    "SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz), SUM(value) AS value FROM intervals_minutes WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1 ORDER BY 1")
                 .bind("name")
                 .to("example")
-                .bind("fmt")
-                .to("%E4Y-%m-%dT%H:%M:00")
                 .bind("tz")
                 .to("America/Denver")
                 .bind("start")
@@ -107,18 +105,18 @@ public class TimeseriesImplTest {
         .thenReturn(
             ResultSets.forRows(
                 Type.struct(
-                    Type.StructField.of("n0", Type.string()),
+                    Type.StructField.of("n0", Type.timestamp()),
                     Type.StructField.of("n1", Type.float64())),
                 List.of(
                     Struct.newBuilder()
                         .set("n0")
-                        .to("2020-10-30T00:00:00")
+                        .to(Timestamp.parseTimestamp("2020-10-30T00:00:00Z"))
                         .set("n1")
                         .to(123.4d)
                         .build(),
                     Struct.newBuilder()
                         .set("n0")
-                        .to("2020-10-30T00:01:00")
+                        .to(Timestamp.parseTimestamp("2020-10-30T00:01:00Z"))
                         .set("n1")
                         .to(56.789d)
                         .build())));
@@ -137,18 +135,16 @@ public class TimeseriesImplTest {
 
     assertEquals(
         ImmutableMap.of(
-            ZonedDateTime.of(2020, 10, 30, 0, 0, 0, 0, timeZone), 123.4d,
-            ZonedDateTime.of(2020, 10, 30, 0, 1, 0, 0, timeZone), 56.789d),
+            ZonedDateTime.of(2020, 10, 29, 18, 0, 0, 0, timeZone), 123.4d,
+            ZonedDateTime.of(2020, 10, 29, 18, 1, 0, 0, timeZone), 56.789d),
         res);
 
     verify(tx)
         .executeQuery(
             Statement.newBuilder(
-                    "WITH intervals AS ( SELECT interval_ts, SUM(value) AS value FROM intervals_minutes WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1 ) SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), AVG(value) FROM intervals GROUP BY 1 ORDER BY 1")
+                    "WITH intervals AS ( SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts, SUM(value) AS value FROM intervals_minutes WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1 ) SELECT TIMESTAMP_TRUNC(interval_ts, HOUR, @tz), AVG(value) FROM intervals GROUP BY 1 ORDER BY 1")
                 .bind("name")
                 .to("example")
-                .bind("fmt")
-                .to("%E4Y-%m-%dT%H:00:00")
                 .bind("tz")
                 .to("America/Denver")
                 .bind("start")

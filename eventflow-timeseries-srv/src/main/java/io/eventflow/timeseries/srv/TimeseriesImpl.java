@@ -9,9 +9,6 @@ import io.eventflow.timeseries.api.GetRequest;
 import io.eventflow.timeseries.api.GetResponse;
 import io.eventflow.timeseries.api.TimeseriesGrpc;
 import io.grpc.stub.StreamObserver;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
 
 public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
@@ -23,13 +20,10 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
 
   @Override
   public void get(GetRequest request, StreamObserver<GetResponse> responseObserver) {
-    var zoneId = ZoneId.of(request.getTimeZone());
     var statement =
-        Statement.newBuilder(query(request.getAggregation()))
+        Statement.newBuilder(query(request.getGranularity(), request.getAggregation()))
             .bind("name")
             .to(request.getName())
-            .bind("fmt")
-            .to(granFmt(request.getGranularity()))
             .bind("tz")
             .to(request.getTimeZone())
             .bind("start")
@@ -44,11 +38,7 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
             .executeQuery(statement)) {
       var resp = GetResponse.newBuilder();
       while (results.next()) {
-        resp.addTimestamps(
-            DateTimeFormatter.ISO_LOCAL_DATE_TIME
-                .parse(results.getString(0), LocalDateTime::from)
-                .atZone(zoneId)
-                .toEpochSecond());
+        resp.addTimestamps(results.getTimestamp(0).getSeconds());
         resp.addValues(results.getDouble(1));
       }
       responseObserver.onNext(resp.build());
@@ -66,48 +56,61 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
    ) PRIMARY KEY (name, interval_ts, insert_id)
   */
 
-  private String query(GetRequest.Aggregation aggregation) {
+  private String query(GetRequest.Granularity granularity, GetRequest.Aggregation aggregation) {
     // Because there may be multiple value rows per interval, aggregation functions other than SUM
     // use a common table expression to materialize the actual minutely intervals in order to be
     // correct. For example, if one interval has two rows of 10 and 20, and another interval has one
     // row of 21, the MAX of those two intervals should be 30, not 21. But because SUM is what's
     // needed to aggregate the value rows, we can special-case SUM queries to avoid the overhead of
     // the CTE.
+
     if (aggregation == GetRequest.Aggregation.AGG_SUM) {
-      return "SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), SUM(value) AS value"
-          + " FROM intervals_minutes "
-          + "WHERE name = @name "
-          + "AND interval_ts BETWEEN @start AND @end "
-          + "GROUP BY 1 "
-          + "ORDER BY 1";
+      return "SELECT TIMESTAMP_TRUNC(interval_ts, "
+          + granPart(granularity)
+          + ", @tz), SUM(value) AS value"
+          + " FROM intervals_minutes"
+          + " WHERE name = @name"
+          + " AND interval_ts BETWEEN @start AND @end"
+          + " GROUP BY 1"
+          + " ORDER BY 1";
     }
 
     return "WITH intervals AS ("
-        + " SELECT interval_ts, SUM(value) AS value"
+        + " SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts, SUM(value) AS value"
         + " FROM intervals_minutes"
         + " WHERE name = @name"
         + " AND interval_ts BETWEEN @start AND @end"
         + " GROUP BY 1"
         + " )"
-        + " SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), "
+        + " SELECT TIMESTAMP_TRUNC(interval_ts, "
+        + granPart(granularity)
+        + ", @tz), "
         + aggFunc(aggregation)
         + "(value) FROM intervals GROUP BY 1 ORDER BY 1";
   }
 
-  private String granFmt(GetRequest.Granularity granularity) {
+  private String granPart(GetRequest.Granularity granularity) {
     switch (granularity) {
       case GRAN_UNKNOWN:
         throw new IllegalArgumentException("missing granularity");
       case GRAN_MINUTE:
-        return "%E4Y-%m-%dT%H:%M:00";
+        return "MINUTE";
       case GRAN_HOUR:
-        return "%E4Y-%m-%dT%H:00:00";
+        return "HOUR";
       case GRAN_DAY:
-        return "%E4Y-%m-%dT00:00:00";
+        return "DAY";
+      case GRAN_WEEK:
+        return "WEEK";
+      case GRAN_ISOWEEK:
+        return "ISOWEEK";
       case GRAN_MONTH:
-        return "%E4Y-%m-01T00:00:00";
+        return "MONTH";
+      case GRAN_QUARTER:
+        return "QUARTER";
       case GRAN_YEAR:
-        return "%E4Y-01-01T00:00:00";
+        return "YEAR";
+      case GRAN_ISOYEAR:
+        return "ISOYEAR";
       default:
         throw new IllegalArgumentException("unrecognized granularity");
     }

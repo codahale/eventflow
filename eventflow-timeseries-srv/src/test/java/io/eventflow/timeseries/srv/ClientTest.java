@@ -44,7 +44,7 @@ public class ClientTest {
                 start,
                 end,
                 ZoneId.systemDefault(),
-                GetRequest.Granularity.GRAN_HOUR,
+                GetRequest.Granularity.GRAN_MINUTE,
                 GetRequest.Aggregation.AGG_SUM));
   }
 }
