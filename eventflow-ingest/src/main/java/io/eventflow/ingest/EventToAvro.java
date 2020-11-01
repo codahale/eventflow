@@ -23,12 +23,7 @@ public class EventToAvro implements SerializableFunction<AvroWriteRequest<Event>
     row.set("type", event.getType());
     row.set("source", event.getSource());
     row.set("timestamp", Timestamps.toMicros(event.getTimestamp()));
-
-    if (event.hasCustomer()) {
-      row.set("customer", event.getCustomer().getValue());
-    } else {
-      row.set("customer", null);
-    }
+    row.set("customer", event.hasCustomer() ? event.getCustomer().getValue() : null);
 
     var attributes = new ArrayList<GenericRecord>(event.getAttributesCount());
     var attributeSchema = input.getSchema().getField("attributes").schema().getElementType();
