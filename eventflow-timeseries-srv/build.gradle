@@ -1,6 +1,7 @@
 plugins {
 	id 'application'
 	id 'com.google.cloud.tools.jib' version '2.6.0'
+	id 'com.gorylenko.gradle-git-properties' version '2.2.4'
 }
 
 tasks.distTar.enabled = false
@@ -8,13 +9,15 @@ tasks.distZip.enabled = false
 
 dependencies {
 	implementation project(':eventflow-timeseries-api')
+
 	implementation "com.google.protobuf:protobuf-java:$protobufVersion"
 	implementation "com.google.protobuf:protobuf-java-util:$protobufVersion"
+
 	implementation "io.grpc:grpc-census:$grpcVersion"
 	implementation "io.grpc:grpc-netty-shaded:$grpcVersion"
 	implementation "io.grpc:grpc-protobuf:$grpcVersion"
 	implementation "io.grpc:grpc-stub:$grpcVersion"
-	implementation 'com.google.cloud:google-cloud-spanner:3.0.1'
+
 	implementation "io.opencensus:opencensus-api:$openCensusVersion"
 	implementation "io.opencensus:opencensus-contrib-grpc-metrics:$openCensusVersion"
 	implementation "io.opencensus:opencensus-contrib-grpc-util:$openCensusVersion"
@@ -22,6 +25,8 @@ dependencies {
 	implementation "io.opencensus:opencensus-impl:$openCensusVersion"
 	implementation "io.opencensus:opencensus-exporter-trace-stackdriver:$openCensusVersion"
 	implementation "io.opencensus:opencensus-exporter-stats-stackdriver:$openCensusVersion"
+
+	implementation 'com.google.cloud:google-cloud-spanner:3.0.1'
 
 	testImplementation "junit:junit:$junitVersion"
 	testImplementation "org.mockito:mockito-core:$mockitoVersion"
