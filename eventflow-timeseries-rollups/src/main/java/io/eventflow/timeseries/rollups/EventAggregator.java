@@ -23,6 +23,12 @@ import org.joda.time.Duration;
 public class EventAggregator extends PTransform<PCollection<Event>, PCollection<Mutation>> {
   private static final long serialVersionUID = -4941981619223641177L;
 
+  // TODO figure out how to support more than just sums
+  // Internally, this would be parsing custom rollups as event.type=max(attr_name) into an
+  // ImmutableTable<String, String, TupleTag>, doing per-function aggregations during the window,
+  // recombining for the write to Spanner. This would support sums, maxes, and mins. Averages can
+  // be supported as-is by dividing sums by counts. Support for percentiles would require storing
+  // buckets and then doing some serious backflips in SQL.
   private final ImmutableMultimap<String, String> customRollups;
 
   public EventAggregator(ImmutableMultimap<String, String> customRollups) {
