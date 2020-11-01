@@ -56,12 +56,12 @@ public class EventAggregatorTest {
 
     PAssert.that(results)
         .containsInAnyOrder(
-            "insert(intervals_minutes{name=three.duration,interval_ts=2020-11-01T12:24:00Z,insert_ts=spanner.commit_timestamp(),value=1.32E9})",
-            "insert(intervals_minutes{name=two.int,interval_ts=2020-11-01T12:24:00Z,insert_ts=spanner.commit_timestamp(),value=200.0})",
-            "insert(intervals_minutes{name=two.float,interval_ts=2020-11-01T12:24:00Z,insert_ts=spanner.commit_timestamp(),value=404.0})",
-            "insert(intervals_minutes{name=three.count,interval_ts=2020-11-01T12:24:00Z,insert_ts=spanner.commit_timestamp(),value=1.0})",
-            "insert(intervals_minutes{name=one.count,interval_ts=2020-11-01T12:23:00Z,insert_ts=spanner.commit_timestamp(),value=2.0})",
-            "insert(intervals_minutes{name=two.count,interval_ts=2020-11-01T12:24:00Z,insert_ts=spanner.commit_timestamp(),value=1.0})");
+            "insert(intervals_minutes{name=three.duration,interval_ts=2020-11-01T12:24:00Z,insert_id=2279999,value=1.32E9,insert_ts=spanner.commit_timestamp()})",
+            "insert(intervals_minutes{name=two.int,interval_ts=2020-11-01T12:24:00Z,insert_id=2279999,value=200.0,insert_ts=spanner.commit_timestamp()})",
+            "insert(intervals_minutes{name=two.float,interval_ts=2020-11-01T12:24:00Z,insert_id=2279999,value=404.0,insert_ts=spanner.commit_timestamp()})",
+            "insert(intervals_minutes{name=three.count,interval_ts=2020-11-01T12:24:00Z,insert_id=2279999,value=1.0,insert_ts=spanner.commit_timestamp()})",
+            "insert(intervals_minutes{name=one.count,interval_ts=2020-11-01T12:23:00Z,insert_id=2279999,value=2.0,insert_ts=spanner.commit_timestamp()})",
+            "insert(intervals_minutes{name=two.count,interval_ts=2020-11-01T12:24:00Z,insert_id=2279999,value=1.0,insert_ts=spanner.commit_timestamp()})");
 
     pipeline.run();
   }
