@@ -10,11 +10,14 @@ dependencies {
 	implementation project(':eventflow-timeseries-api')
 	implementation "com.google.protobuf:protobuf-java:$protobufVersion"
 	implementation "com.google.protobuf:protobuf-java-util:$protobufVersion"
-	implementation "io.grpc:grpc-all:$grpcVersion"
+	implementation "io.grpc:grpc-netty-shaded:$grpcVersion"
+	implementation "io.grpc:grpc-protobuf:$grpcVersion"
+	implementation "io.grpc:grpc-stub:$grpcVersion"
 	implementation 'com.google.cloud:google-cloud-spanner:3.0.1'
 
 	testImplementation "junit:junit:$junitVersion"
 	testImplementation "org.mockito:mockito-core:$mockitoVersion"
+	testImplementation "io.grpc:grpc-testing:$grpcVersion"
 }
 
 application {
