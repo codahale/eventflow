@@ -101,18 +101,18 @@ public class TimeseriesImplTest {
     verify(tx)
         .executeQuery(
             Statement.newBuilder(
-                "SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), SUM(value) AS value FROM intervals_minutely WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1 ORDER BY 1")
-                     .bind("name")
-                     .to("example")
-                     .bind("fmt")
-                     .to("%E4Y-%m-%dT%H:%M:00")
-                     .bind("tz")
-                     .to("America/Denver")
-                     .bind("start")
-                     .to(Timestamp.parseTimestamp("2020-10-29T00:00:00Z"))
-                     .bind("end")
-                     .to(Timestamp.parseTimestamp("2020-10-31T00:00:00Z"))
-                     .build());
+                    "SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), SUM(value) AS value FROM intervals_minutely WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1 ORDER BY 1")
+                .bind("name")
+                .to("example")
+                .bind("fmt")
+                .to("%E4Y-%m-%dT%H:%M:00")
+                .bind("tz")
+                .to("America/Denver")
+                .bind("start")
+                .to(Timestamp.parseTimestamp("2020-10-29T00:00:00Z"))
+                .bind("end")
+                .to(Timestamp.parseTimestamp("2020-10-31T00:00:00Z"))
+                .build());
   }
 
   @Test
