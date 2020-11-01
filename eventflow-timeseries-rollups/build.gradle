@@ -20,5 +20,5 @@ dependencies {
 }
 
 application {
-	mainClass = 'io.eventflow.timeseries.rollups.RollupPipeline'
+	mainClass = 'io.eventflow.timeseries.rollups.StreamingRollupPipeline'
 }
