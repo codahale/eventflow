@@ -2,7 +2,6 @@ package io.eventflow.timeseries.srv;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -18,40 +17,35 @@ import com.google.common.collect.ImmutableMap;
 import io.eventflow.timeseries.api.GetRequest;
 import io.eventflow.timeseries.api.TimeseriesClient;
 import io.eventflow.timeseries.api.TimeseriesGrpc;
-import io.grpc.inprocess.InProcessChannelBuilder;
-import io.grpc.inprocess.InProcessServerBuilder;
-import io.grpc.testing.GrpcCleanupRule;
-import java.io.IOException;
+import io.grpc.testing.GrpcServerRule;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
 public class TimeseriesImplTest {
-  private final DatabaseClient spanner = mock(DatabaseClient.class);
-  @Rule public GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
-  private final String serverName = InProcessServerBuilder.generateName();
-  private final TimeseriesClient client =
-      new TimeseriesClient(
-          TimeseriesGrpc.newBlockingStub(
-              grpcCleanup.register(
-                  InProcessChannelBuilder.forName(serverName).directExecutor().build())));
+  @Rule public MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+  @Rule public GrpcServerRule grpcServerRule = new GrpcServerRule();
+  @Mock private DatabaseClient spanner;
+  @Mock private ReadOnlyTransaction tx;
+  private TimeseriesClient client;
 
-  public TimeseriesImplTest() throws IOException {
-    grpcCleanup.register(
-        InProcessServerBuilder.forName(serverName)
-            .directExecutor()
-            .addService(new TimeseriesImpl(spanner))
-            .build()
-            .start());
+  @Before
+  public void setUp() {
+    grpcServerRule.getServiceRegistry().addService(new TimeseriesImpl(spanner));
+    this.client = new TimeseriesClient(TimeseriesGrpc.newBlockingStub(grpcServerRule.getChannel()));
   }
 
   @Test
   public void getMinutelySum() {
-    var tx = mock(ReadOnlyTransaction.class);
     when(tx.executeQuery(any()))
         .thenReturn(
             ResultSets.forRows(
@@ -109,7 +103,6 @@ public class TimeseriesImplTest {
 
   @Test
   public void getHourlyAvg() {
-    var tx = mock(ReadOnlyTransaction.class);
     when(tx.executeQuery(any()))
         .thenReturn(
             ResultSets.forRows(
