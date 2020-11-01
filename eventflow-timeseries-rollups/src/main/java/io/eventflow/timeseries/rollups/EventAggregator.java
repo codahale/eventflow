@@ -62,12 +62,13 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
       var ts = truncate(event.getTimestamp());
 
       // Record the count.
-      c.output(KV.of(KV.of(name(event, "count"), ts), 1.0));
+      c.output(KV.of(KV.of(metricName(event, "count"), ts), 1.0));
 
       // Record all custom aggregates.
-      for (String attribute : customAggregates.get(event.getType())) {
-        var value = event.getAttributesMap().get(attribute);
+      for (String name : customAggregates.get(event.getType())) {
+        var value = event.getAttributesMap().get(name);
         if (value != null) {
+          var key = KV.of(metricName(event, name), ts);
           switch (value.getValueCase()) {
             case BOOL_VALUE:
             case STRING_VALUE:
@@ -76,32 +77,25 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
             case VALUE_NOT_SET:
               break;
             case INT_VALUE:
-              c.output(KV.of(KV.of(name(event, attribute), ts), (double) value.getIntValue()));
+              c.output(KV.of(key, (double) value.getIntValue()));
               break;
             case FLOAT_VALUE:
-              c.output(KV.of(KV.of(name(event, attribute), ts), value.getFloatValue()));
+              c.output(KV.of(key, value.getFloatValue()));
               break;
             case DURATION_VALUE:
-              c.output(
-                  KV.of(
-                      KV.of(name(event, attribute), ts),
-                      (double) Durations.toMicros(value.getDurationValue())));
+              c.output(KV.of(key, (double) Durations.toMicros(value.getDurationValue())));
               break;
           }
         }
       }
     }
 
-    private String name(Event event, String name) {
-      var j = new StringJoiner(".");
-      j.add(event.getType());
-
+    private String metricName(Event event, String name) {
+      var j = new StringJoiner(".").add(event.getType());
       if (event.hasCustomer()) {
         j.add(event.getCustomer().getValue());
       }
-
-      j.add(name);
-      return j.toString();
+      return j.add(name).toString();
     }
 
     private long truncate(com.google.protobuf.Timestamp timestamp) {
