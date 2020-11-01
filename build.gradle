@@ -28,13 +28,12 @@ allprojects { p ->
 		errorprone 'com.uber.nullaway:nullaway:0.8.0'
 	}
 
-	compileJava {
-		sourceCompatibility = 11
-		targetCompatibility = 11
-	}
+	sourceCompatibility = 11
+	targetCompatibility = 11
 
 	afterEvaluate {
 		tasks.withType(JavaCompile).configureEach {
+			options.compilerArgs.addAll(['--release', '11'])
 			options.errorprone.disableWarningsInGeneratedCode = true
 			options.errorprone.excludedPaths = '.*/generated/.*'
 			options.errorprone {
