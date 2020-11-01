@@ -13,6 +13,7 @@ dependencies {
 	implementation 'com.google.cloud:google-cloud-spanner:3.0.1'
 
 	testImplementation "junit:junit:$junitVersion"
+	testImplementation "org.mockito:mockito-core:$mockitoVersion"
 }
 
 application {

@@ -38,7 +38,6 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
             .to(Timestamp.ofTimeMicroseconds(Timestamps.toMicros(request.getEnd())))
             .build();
 
-    System.out.println(statement);
     try (var results =
         spanner
             .singleUseReadOnlyTransaction(TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES))
