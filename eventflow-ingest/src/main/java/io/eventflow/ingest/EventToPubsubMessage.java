@@ -16,11 +16,11 @@ public class EventToPubsubMessage extends DoFn<Event, PubsubMessage> {
 
     var attributes = new HashMap<String, String>();
     attributes.put(Constants.ID_ATTRIBUTE, event.getId());
-    attributes.put("event.type", event.getType());
-    attributes.put("event.source", event.getSource());
-    attributes.put("event.timestamp", Timestamps.toString(event.getTimestamp()));
+    attributes.put(Constants.TYPE_ATTRIBUTE, event.getType());
+    attributes.put(Constants.SOURCE_ATTRIBUTE, event.getSource());
+    attributes.put(Constants.TIMESTAMP_ATTRIBUTE, Timestamps.toString(event.getTimestamp()));
     if (event.hasCustomer()) {
-      attributes.put("event.customer", event.getCustomer().getValue());
+      attributes.put(Constants.CUSTOMER_ATTRIBUTE, event.getCustomer().getValue());
     }
 
     c.output(new PubsubMessage(event.toByteArray(), attributes, ""));
