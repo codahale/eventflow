@@ -6,7 +6,6 @@ import io.eventflow.timeseries.api.TimeseriesGrpc;
 import io.grpc.ManagedChannelBuilder;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 
 public class ClientTest {
   public static void main(String[] args) {
@@ -15,18 +14,37 @@ public class ClientTest {
 
     var client = new TimeseriesClient(stub);
 
-    var start = Instant.now().minus(2, ChronoUnit.DAYS);
-    var end = start.plus(1, ChronoUnit.DAYS);
+    var start = Instant.parse("2020-10-29T00:00:00Z");
+    var end = Instant.parse("2020-11-01T00:00:00Z");
 
-    var resp =
-        client.get(
+    System.out.println(
+        "daily avg: "
+            + client.get(
+                "example",
+                start,
+                end,
+                ZoneId.systemDefault(),
+                GetRequest.Granularity.GRAN_DAY,
+                GetRequest.Aggregation.AGG_AVG));
+
+    System.out.println(
+        "hourly sums: "
+            + client.get(
             "example",
             start,
             end,
             ZoneId.systemDefault(),
             GetRequest.Granularity.GRAN_HOUR,
-            GetRequest.Aggregation.AGG_AVG);
+            GetRequest.Aggregation.AGG_SUM));
 
-    System.out.println("resp: " + resp);
+    System.out.println(
+        "minutely sums: "
+            + client.get(
+            "example",
+            start,
+            end,
+            ZoneId.systemDefault(),
+            GetRequest.Granularity.GRAN_HOUR,
+            GetRequest.Aggregation.AGG_SUM));
   }
 }

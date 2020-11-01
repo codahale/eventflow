@@ -15,22 +15,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
 
 public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
-  /*
-   CREATE TABLE intervals_minutely (
-     name STRING(1000) NOT NULL,
-     interval_ts TIMESTAMP NOT NULL,
-     insert_id INT64 NOT NULL,
-     value INT64 NOT NULL,
-     insert_ts TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true)
-   ) PRIMARY KEY (name, interval_ts, insert_id)
-  */
-  private static final String QUERY_FRONT =
-      "WITH intermediate AS ("
-          + " SELECT interval_ts, CAST(SUM(value) AS FLOAT64) AS value"
-          + " FROM intervals_minutely WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1"
-          + " )"
-          + " SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), ";
-  private static final String QUERY_BACK = "(value) FROM intermediate GROUP BY 1 ORDER BY 1";
   private final DatabaseClient spanner;
 
   public TimeseriesImpl(DatabaseClient spanner) {
@@ -41,9 +25,7 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
   public void get(GetRequest request, StreamObserver<GetResponse> responseObserver) {
     var zoneId = ZoneId.of(request.getTimeZone());
     var statement =
-        Statement.newBuilder(QUERY_FRONT)
-            .append(aggFunc(request.getAggregation()))
-            .append(QUERY_BACK)
+        Statement.newBuilder(query(request.getAggregation()))
             .bind("name")
             .to(request.getName())
             .bind("fmt")
@@ -55,6 +37,7 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
             .bind("end")
             .to(Timestamp.ofTimeMicroseconds(Timestamps.toMicros(request.getEnd())))
             .build();
+
     System.out.println(statement);
     try (var results =
         spanner
@@ -72,6 +55,38 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
       responseObserver.onNext(resp.build());
       responseObserver.onCompleted();
     }
+  }
+
+  /*
+   CREATE TABLE intervals_minutely (
+     name STRING(1000) NOT NULL,
+     interval_ts TIMESTAMP NOT NULL,
+     insert_id INT64 NOT NULL,
+     value FLOAT64 NOT NULL,
+     insert_ts TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true)
+   ) PRIMARY KEY (name, interval_ts, insert_id)
+  */
+
+  private String query(GetRequest.Aggregation aggregation) {
+    if (aggregation == GetRequest.Aggregation.AGG_SUM) {
+      return "SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), SUM(value) AS value"
+          + " FROM intervals_minutely "
+          + "WHERE name = @name "
+          + "AND interval_ts BETWEEN @start AND @end "
+          + "GROUP BY 1 "
+          + "ORDER BY 1";
+    }
+
+    return "WITH intervals AS ("
+        + " SELECT interval_ts, SUM(value) AS value"
+        + " FROM intervals_minutely"
+        + " WHERE name = @name"
+        + " AND interval_ts BETWEEN @start AND @end"
+        + " GROUP BY 1"
+        + " )"
+        + " SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), "
+        + aggFunc(aggregation)
+        + "(value) FROM intervals GROUP BY 1 ORDER BY 1";
   }
 
   private String granFmt(GetRequest.Granularity granularity) {
