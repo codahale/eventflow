@@ -57,7 +57,7 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
   }
 
   /*
-   CREATE TABLE intervals_minutely (
+   CREATE TABLE intervals_minutes (
      name STRING(1000) NOT NULL,
      interval_ts TIMESTAMP NOT NULL,
      insert_id INT64 NOT NULL,
@@ -69,7 +69,7 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
   private String query(GetRequest.Aggregation aggregation) {
     if (aggregation == GetRequest.Aggregation.AGG_SUM) {
       return "SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), SUM(value) AS value"
-          + " FROM intervals_minutely "
+          + " FROM intervals_minutes "
           + "WHERE name = @name "
           + "AND interval_ts BETWEEN @start AND @end "
           + "GROUP BY 1 "
@@ -78,7 +78,7 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
 
     return "WITH intervals AS ("
         + " SELECT interval_ts, SUM(value) AS value"
-        + " FROM intervals_minutely"
+        + " FROM intervals_minutes"
         + " WHERE name = @name"
         + " AND interval_ts BETWEEN @start AND @end"
         + " GROUP BY 1"

@@ -93,7 +93,7 @@ public class TimeseriesImplTest {
     verify(tx)
         .executeQuery(
             Statement.newBuilder(
-                    "SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), SUM(value) AS value FROM intervals_minutely WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1 ORDER BY 1")
+                    "SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), SUM(value) AS value FROM intervals_minutes WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1 ORDER BY 1")
                 .bind("name")
                 .to("example")
                 .bind("fmt")
@@ -151,7 +151,7 @@ public class TimeseriesImplTest {
     verify(tx)
         .executeQuery(
             Statement.newBuilder(
-                    "WITH intervals AS ( SELECT interval_ts, SUM(value) AS value FROM intervals_minutely WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1 ) SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), AVG(value) FROM intervals GROUP BY 1 ORDER BY 1")
+                    "WITH intervals AS ( SELECT interval_ts, SUM(value) AS value FROM intervals_minutes WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1 ) SELECT FORMAT_TIMESTAMP(@fmt, interval_ts, @tz), AVG(value) FROM intervals GROUP BY 1 ORDER BY 1")
                 .bind("name")
                 .to("example")
                 .bind("fmt")
