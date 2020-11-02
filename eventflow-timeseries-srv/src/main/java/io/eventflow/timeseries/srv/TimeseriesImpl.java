@@ -21,7 +21,7 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
   @Override
   public void get(GetRequest request, StreamObserver<GetResponse> responseObserver) {
     var statement =
-        Statement.newBuilder(query(request.getGranularity(), request.getAggregation()))
+        query(request.getGranularity(), request.getAggregation())
             .bind("name")
             .to(request.getName())
             .bind("tz")
@@ -56,7 +56,8 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
    ) PRIMARY KEY (name, interval_ts, insert_id)
   */
 
-  private String query(GetRequest.Granularity granularity, GetRequest.Aggregation aggregation) {
+  private Statement.Builder query(
+      GetRequest.Granularity granularity, GetRequest.Aggregation aggregation) {
     // Because there may be multiple value rows per interval, aggregation functions other than SUM
     // use a common table expression to materialize the actual minutely intervals in order to be
     // correct. For example, if one interval has two rows of 10 and 20, and another interval has one
@@ -65,28 +66,29 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
     // the CTE.
 
     if (aggregation == GetRequest.Aggregation.AGG_SUM) {
-      return "SELECT TIMESTAMP_TRUNC(interval_ts, "
-          + granPart(granularity)
-          + ", @tz), SUM(value) AS value"
-          + " FROM intervals_minutes"
-          + " WHERE name = @name"
-          + " AND interval_ts BETWEEN @start AND @end"
-          + " GROUP BY 1"
-          + " ORDER BY 1";
+      return Statement.newBuilder("SELECT TIMESTAMP_TRUNC(interval_ts, ")
+          .append(granPart(granularity))
+          .append(", @tz), SUM(value) AS value")
+          .append(" FROM intervals_minutes")
+          .append(" WHERE name = @name")
+          .append(" AND interval_ts BETWEEN @start AND @end")
+          .append(" GROUP BY 1")
+          .append(" ORDER BY 1");
     }
 
-    return "WITH intervals AS ("
-        + " SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts, SUM(value) AS value"
-        + " FROM intervals_minutes"
-        + " WHERE name = @name"
-        + " AND interval_ts BETWEEN @start AND @end"
-        + " GROUP BY 1"
-        + " )"
-        + " SELECT TIMESTAMP_TRUNC(interval_ts, "
-        + granPart(granularity)
-        + ", @tz), "
-        + aggFunc(aggregation)
-        + "(value) FROM intervals GROUP BY 1 ORDER BY 1";
+    return Statement.newBuilder("WITH intervals AS (")
+        .append("SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts,")
+        .append(" SUM(value) AS value")
+        .append(" FROM intervals_minutes")
+        .append(" WHERE name = @name")
+        .append(" AND interval_ts BETWEEN @start AND @end")
+        .append(" GROUP BY 1")
+        .append(")")
+        .append(" SELECT TIMESTAMP_TRUNC(interval_ts, ")
+        .append(granPart(granularity))
+        .append(", @tz), ")
+        .append(aggFunc(aggregation))
+        .append("(value) FROM intervals GROUP BY 1 ORDER BY 1");
   }
 
   private String granPart(GetRequest.Granularity granularity) {
