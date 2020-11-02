@@ -18,6 +18,7 @@ dependencies {
 	implementation "io.grpc:grpc-stub:$grpcVersion"
 
 	implementation 'com.google.cloud:google-cloud-spanner:3.0.1'
+	implementation 'com.github.ben-manes.caffeine:caffeine:2.8.6'
 
 	testImplementation "junit:junit:$junitVersion"
 	testImplementation "org.mockito:mockito-core:$mockitoVersion"
