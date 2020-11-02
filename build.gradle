@@ -50,9 +50,8 @@ allprojects { p ->
 			options.errorprone.disableWarningsInGeneratedCode = true
 			options.errorprone.excludedPaths = '.*/generated/.*'
 			options.errorprone {
-				// These are both comma-separated lists.
 				option 'NullAway:AnnotatedPackages', 'io.eventflow'
-				option 'NullAway:ExcludedFieldAnnotations', 'org.mockito.Mock'
+				option 'NullAway:ExcludedFieldAnnotations', 'org.mockito.Mock,org.mockito.Captor'
 			}
 		}
 	}
