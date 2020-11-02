@@ -1,8 +1,8 @@
 package io.eventflow.ingest;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.StringValue;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.pb.Event;
@@ -53,7 +53,11 @@ public class EventToPubsubMessageTest {
             msgs -> {
               for (PubsubMessage msg : msgs) {
                 assertEquals(attributes, msg.getAttributeMap());
-                assertArrayEquals(event.toByteArray(), msg.getPayload());
+                try {
+                  assertEquals(event, Event.parseFrom(msg.getPayload()));
+                } catch (InvalidProtocolBufferException e) {
+                  throw new AssertionError(e);
+                }
               }
               return null;
             });
@@ -84,7 +88,11 @@ public class EventToPubsubMessageTest {
             msgs -> {
               for (PubsubMessage msg : msgs) {
                 assertEquals(attributes, msg.getAttributeMap());
-                assertArrayEquals(event.toByteArray(), msg.getPayload());
+                try {
+                  assertEquals(event, Event.parseFrom(msg.getPayload()));
+                } catch (InvalidProtocolBufferException e) {
+                  throw new AssertionError(e);
+                }
               }
               return null;
             });
