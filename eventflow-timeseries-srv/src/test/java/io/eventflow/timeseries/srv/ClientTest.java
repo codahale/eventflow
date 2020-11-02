@@ -38,6 +38,16 @@ public class ClientTest {
                 GetRequest.Aggregation.AGG_SUM));
 
     System.out.println(
+        "yearly avg: "
+            + client.get(
+            "example",
+            start,
+            end,
+            ZoneId.systemDefault(),
+            GetRequest.Granularity.GRAN_YEAR,
+            GetRequest.Aggregation.AGG_AVG));
+
+    System.out.println(
         "minutely sums: "
             + client.get(
                 "example",
