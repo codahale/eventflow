@@ -1,6 +1,4 @@
-package io.eventflow.testing;
-
-import static org.assertj.core.api.Assertions.fail;
+package io.eventflow.testing.beam;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,7 +32,7 @@ public class SchemaAssert extends AbstractAssert<SchemaAssert, Schema> {
       }
 
     } catch (IOException e) {
-      fail("error writing record", e);
+      Assertions.fail("error writing record", e);
     }
 
     try {
@@ -44,7 +42,7 @@ public class SchemaAssert extends AbstractAssert<SchemaAssert, Schema> {
         fReader.forEachRemaining(r -> Assertions.assertThat(r).isEqualTo(record));
       }
     } catch (IOException e) {
-      fail("error reading record", e);
+      Assertions.fail("error reading record", e);
     }
   }
 }

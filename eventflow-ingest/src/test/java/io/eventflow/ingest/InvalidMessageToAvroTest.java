@@ -6,7 +6,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.pb.Event;
 import io.eventflow.ingest.pb.InvalidMessage;
-import io.eventflow.testing.SchemaAssert;
+import io.eventflow.testing.beam.SchemaAssert;
 import org.apache.avro.Schema;
 import org.apache.beam.sdk.io.gcp.bigquery.AvroWriteRequest;
 import org.junit.Before;

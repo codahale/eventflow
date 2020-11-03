@@ -1,6 +1,6 @@
 package io.eventflow.ingest;
 
-import static io.eventflow.testing.SchemaAssert.assertThat;
+import static io.eventflow.testing.beam.SchemaAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.protobuf.StringValue;
