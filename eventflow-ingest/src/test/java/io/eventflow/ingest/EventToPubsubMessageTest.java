@@ -1,11 +1,11 @@
 package io.eventflow.ingest;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.StringValue;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.pb.Event;
+import io.eventflow.testing.ProtobufAssert;
 import java.util.HashMap;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesAndMessageIdCoder;
@@ -52,12 +52,10 @@ public class EventToPubsubMessageTest {
         .satisfies(
             msgs -> {
               for (PubsubMessage msg : msgs) {
-                assertEquals(attributes, msg.getAttributeMap());
-                try {
-                  assertEquals(event, Event.parseFrom(msg.getPayload()));
-                } catch (InvalidProtocolBufferException e) {
-                  throw new AssertionError(e);
-                }
+                assertThat(msg.getAttributeMap()).isEqualTo(attributes);
+                assertThat(ProtobufAssert.assertThat(Event::parseFrom))
+                    .canParse(msg.getPayload())
+                    .isEqualTo(event);
               }
               return null;
             });
@@ -87,12 +85,10 @@ public class EventToPubsubMessageTest {
         .satisfies(
             msgs -> {
               for (PubsubMessage msg : msgs) {
-                assertEquals(attributes, msg.getAttributeMap());
-                try {
-                  assertEquals(event, Event.parseFrom(msg.getPayload()));
-                } catch (InvalidProtocolBufferException e) {
-                  throw new AssertionError(e);
-                }
+                assertThat(msg.getAttributeMap()).isEqualTo(attributes);
+                assertThat(ProtobufAssert.assertThat(Event::parseFrom))
+                    .canParse(msg.getPayload())
+                    .isEqualTo(event);
               }
               return null;
             });

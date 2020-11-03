@@ -40,8 +40,7 @@ allprojects { p ->
 		errorprone 'com.google.errorprone:error_prone_core:2.4.0'
 		errorprone 'com.uber.nullaway:nullaway:0.8.0'
 
-		testImplementation "junit:junit:$junitVersion"
-		testImplementation "org.mockito:mockito-core:$mockitoVersion"
+		testImplementation project(':eventflow-testing')
 	}
 
 	sourceCompatibility = 11

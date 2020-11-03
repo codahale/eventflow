@@ -1,13 +1,12 @@
 package io.eventflow.ingest;
 
-import static io.eventflow.ingest.EventToAvroTest.assertWritable;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.pb.Event;
 import io.eventflow.ingest.pb.InvalidMessage;
-import java.io.IOException;
+import io.eventflow.testing.SchemaAssert;
 import org.apache.avro.Schema;
 import org.apache.beam.sdk.io.gcp.bigquery.AvroWriteRequest;
 import org.junit.Before;
@@ -23,7 +22,7 @@ public class InvalidMessageToAvroTest {
   }
 
   @Test
-  public void invalidMessageWithoutEventOrAttributes() throws IOException {
+  public void invalidMessageWithoutEventOrAttributes() {
     var message =
         InvalidMessage.newBuilder()
             .setMessageId("12345")
@@ -33,14 +32,14 @@ public class InvalidMessageToAvroTest {
             .build();
 
     var row = f.apply(new AvroWriteRequest<>(message, schema));
-    assertEquals(
-        "{\"message_id\": \"12345\", \"message_data\": {\"bytes\": \"ok\"}, \"message_attributes\": [], \"received_at\": 123456000000, \"error\": \"bad vibes\", \"event\": null}",
-        row.toString());
-    assertWritable(schema, row);
+    assertThat(row.toString())
+        .isEqualTo(
+            "{\"message_id\": \"12345\", \"message_data\": {\"bytes\": \"ok\"}, \"message_attributes\": [], \"received_at\": 123456000000, \"error\": \"bad vibes\", \"event\": null}");
+    SchemaAssert.assertThat(schema).canReadAndWrite(row);
   }
 
   @Test
-  public void invalidMessageWithoutEvent() throws IOException {
+  public void invalidMessageWithoutEvent() {
     var message =
         InvalidMessage.newBuilder()
             .setMessageId("12345")
@@ -51,14 +50,14 @@ public class InvalidMessageToAvroTest {
             .build();
 
     var row = f.apply(new AvroWriteRequest<>(message, schema));
-    assertEquals(
-        "{\"message_id\": \"12345\", \"message_data\": {\"bytes\": \"ok\"}, \"message_attributes\": [{\"key\": \"event.id\", \"value\": \"test\"}], \"received_at\": 123456000000, \"error\": \"bad vibes\", \"event\": null}",
-        row.toString());
-    assertWritable(schema, row);
+    assertThat(row.toString())
+        .isEqualTo(
+            "{\"message_id\": \"12345\", \"message_data\": {\"bytes\": \"ok\"}, \"message_attributes\": [{\"key\": \"event.id\", \"value\": \"test\"}], \"received_at\": 123456000000, \"error\": \"bad vibes\", \"event\": null}");
+    SchemaAssert.assertThat(schema).canReadAndWrite(row);
   }
 
   @Test
-  public void invalidMessage() throws IOException {
+  public void invalidMessage() {
     var message =
         InvalidMessage.newBuilder()
             .setMessageId("12345")
@@ -70,9 +69,9 @@ public class InvalidMessageToAvroTest {
             .build();
 
     var row = f.apply(new AvroWriteRequest<>(message, schema));
-    assertEquals(
-        "{\"message_id\": \"12345\", \"message_data\": {\"bytes\": \"ok\"}, \"message_attributes\": [{\"key\": \"event.id\", \"value\": \"test\"}], \"received_at\": 123456000000, \"error\": \"bad vibes\", \"event\": \"id: \\\"test\\\"\"}",
-        row.toString());
-    assertWritable(schema, row);
+    assertThat(row.toString())
+        .isEqualTo(
+            "{\"message_id\": \"12345\", \"message_data\": {\"bytes\": \"ok\"}, \"message_attributes\": [{\"key\": \"event.id\", \"value\": \"test\"}], \"received_at\": 123456000000, \"error\": \"bad vibes\", \"event\": \"id: \\\"test\\\"\"}");
+    SchemaAssert.assertThat(schema).canReadAndWrite(row);
   }
 }

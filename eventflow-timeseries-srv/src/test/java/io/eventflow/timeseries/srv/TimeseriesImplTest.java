@@ -1,6 +1,6 @@
 package io.eventflow.timeseries.srv;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -78,11 +78,11 @@ public class TimeseriesImplTest {
             GetRequest.Granularity.GRAN_MINUTE,
             GetRequest.Aggregation.AGG_SUM);
 
-    assertEquals(
-        ImmutableMap.of(
-            ZonedDateTime.of(2020, 10, 29, 18, 0, 0, 0, timeZone), 123.4d,
-            ZonedDateTime.of(2020, 10, 29, 18, 1, 0, 0, timeZone), 56.789d),
-        res);
+    assertThat(res)
+        .isEqualTo(
+            ImmutableMap.of(
+                ZonedDateTime.of(2020, 10, 29, 18, 0, 0, 0, timeZone), 123.4d,
+                ZonedDateTime.of(2020, 10, 29, 18, 1, 0, 0, timeZone), 56.789d));
 
     verify(tx)
         .executeQuery(
@@ -133,11 +133,11 @@ public class TimeseriesImplTest {
             GetRequest.Granularity.GRAN_HOUR,
             GetRequest.Aggregation.AGG_AVG);
 
-    assertEquals(
-        ImmutableMap.of(
-            ZonedDateTime.of(2020, 10, 29, 18, 0, 0, 0, timeZone), 123.4d,
-            ZonedDateTime.of(2020, 10, 29, 18, 1, 0, 0, timeZone), 56.789d),
-        res);
+    assertThat(res)
+        .isEqualTo(
+            ImmutableMap.of(
+                ZonedDateTime.of(2020, 10, 29, 18, 0, 0, 0, timeZone), 123.4d,
+                ZonedDateTime.of(2020, 10, 29, 18, 1, 0, 0, timeZone), 56.789d));
 
     verify(tx)
         .executeQuery(

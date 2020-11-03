@@ -1,11 +1,9 @@
 package io.eventflow.common;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.base.Charsets;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.util.JsonFormat;
+import com.google.protobuf.Timestamp;
 import io.eventflow.common.pb.AttributeValue;
 import java.time.Duration;
 import java.time.Instant;
@@ -15,57 +13,62 @@ public class AttributeValuesTest {
 
   @Test
   public void boolValue() {
-    assertEquals("{\"bool_value\":true}", format(AttributeValues.boolValue(true)));
+    assertThat(AttributeValues.boolValue(true))
+        .isEqualTo(AttributeValue.newBuilder().setBoolValue(true).build());
   }
 
   @Test
   public void intValue() {
-    assertEquals("{\"int_value\":\"100\"}", format(AttributeValues.intValue(100)));
+    assertThat(AttributeValues.intValue(100))
+        .isEqualTo(AttributeValue.newBuilder().setIntValue(100).build());
   }
 
   @Test
   public void floatValue() {
-    assertEquals("{\"float_value\":100.1}", format(AttributeValues.floatValue(100.1)));
+    assertThat(AttributeValues.floatValue(100.1))
+        .isEqualTo(AttributeValue.newBuilder().setFloatValue(100.1).build());
   }
 
   @Test
   public void stringValue() {
-    assertEquals("{\"string_value\":\"help\"}", format(AttributeValues.stringValue("help")));
+    assertThat(AttributeValues.stringValue("help"))
+        .isEqualTo(AttributeValue.newBuilder().setStringValue("help").build());
   }
 
   @Test
   public void bytesValue() {
-    assertEquals("{\"bytes_value\":\"aGVscA==\"}", format(AttributeValues.bytesValue("help")));
-    assertEquals(
-        "{\"bytes_value\":\"aGVscA==\"}",
-        format(AttributeValues.bytesValue("help".getBytes(Charsets.UTF_8))));
-    assertEquals(
-        "{\"bytes_value\":\"aGVscA==\"}",
-        format(AttributeValues.bytesValue(ByteString.copyFromUtf8("help"))));
+    var bytes = ByteString.copyFromUtf8("help");
+
+    assertThat(AttributeValues.bytesValue("help"))
+        .isEqualTo(AttributeValue.newBuilder().setBytesValue(bytes).build());
+    assertThat(AttributeValues.bytesValue(bytes.toByteArray()))
+        .isEqualTo(AttributeValue.newBuilder().setBytesValue(bytes).build());
+    assertThat(AttributeValues.bytesValue(bytes))
+        .isEqualTo(AttributeValue.newBuilder().setBytesValue(bytes).build());
   }
 
   @Test
   public void timestampValue() {
-    var i = Instant.ofEpochSecond(1603937188, 230929000000000L);
-    assertEquals(
-        "{\"timestamp_value\":\"2020-10-31T18:15:17Z\"}",
-        format(AttributeValues.timestampValue(i)));
+    var i = Instant.ofEpochMilli(1603937188123L);
+
+    assertThat(AttributeValues.timestampValue(i))
+        .isEqualTo(
+            AttributeValue.newBuilder()
+                .setTimestampValue(
+                    Timestamp.newBuilder().setSeconds(1603937188).setNanos(123000000).build())
+                .build());
   }
 
   @Test
   public void durationValue() {
-    var d = Duration.ofMinutes(20);
-    assertEquals("{\"duration_value\":\"1200s\"}", format(AttributeValues.durationValue(d)));
-  }
-
-  private static String format(AttributeValue v) {
-    try {
-      return JsonFormat.printer()
-          .preservingProtoFieldNames()
-          .omittingInsignificantWhitespace()
-          .print(v);
-    } catch (InvalidProtocolBufferException e) {
-      throw new RuntimeException(e);
-    }
+    assertThat(AttributeValues.durationValue(Duration.ofMillis(20_000_123)))
+        .isEqualTo(
+            AttributeValue.newBuilder()
+                .setDurationValue(
+                    com.google.protobuf.Duration.newBuilder()
+                        .setSeconds(20000)
+                        .setNanos(123000000)
+                        .build())
+                .build());
   }
 }

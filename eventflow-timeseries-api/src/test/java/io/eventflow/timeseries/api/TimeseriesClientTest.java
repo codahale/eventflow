@@ -1,6 +1,6 @@
 package io.eventflow.timeseries.api;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -62,13 +62,13 @@ public class TimeseriesClientTest {
             GetRequest.Granularity.GRAN_MINUTE,
             GetRequest.Aggregation.AGG_AVG);
 
-    assertEquals(
-        ImmutableMap.of(
-            ZonedDateTime.of(1973, 11, 29, 14, 33, 9, 0, timeZone),
-            22.3,
-            ZonedDateTime.of(2009, 2, 13, 16, 31, 31, 0, timeZone),
-            45.6),
-        results);
+    assertThat(results)
+        .isEqualTo(
+            ImmutableMap.of(
+                ZonedDateTime.of(1973, 11, 29, 14, 33, 9, 0, timeZone),
+                22.3,
+                ZonedDateTime.of(2009, 2, 13, 16, 31, 31, 0, timeZone),
+                45.6));
 
     verify(service)
         .get(

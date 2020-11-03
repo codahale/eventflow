@@ -1,0 +1,13 @@
+plugins {
+	id 'java-library'
+}
+
+dependencies {
+	api "junit:junit:$junitVersion"
+	api "org.mockito:mockito-core:$mockitoVersion"
+	api "org.assertj:assertj-core:$assertJVersion"
+
+	api "com.google.protobuf:protobuf-java:$protobufVersion"
+	api "com.google.protobuf:protobuf-java-util:$protobufVersion"
+	api 'org.apache.avro:avro:1.8.2'
+}

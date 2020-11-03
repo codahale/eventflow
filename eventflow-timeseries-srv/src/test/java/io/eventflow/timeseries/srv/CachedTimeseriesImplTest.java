@@ -1,6 +1,6 @@
 package io.eventflow.timeseries.srv;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -55,8 +55,8 @@ public class CachedTimeseriesImplTest {
             .setEnd(Timestamp.newBuilder().setSeconds(10_000))
             .build();
 
-    assertEquals(RESP, client.get(req));
-    assertEquals(RESP, client.get(req));
+    assertThat(client.get(req)).isEqualTo(RESP);
+    assertThat(client.get(req)).isEqualTo(RESP);
 
     verify(base, times(2)).get(eq(req), any());
     verifyNoInteractions(cache);
@@ -72,8 +72,8 @@ public class CachedTimeseriesImplTest {
 
     when(cache.getIfPresent(req.toByteArray())).thenReturn(null, RESP);
 
-    assertEquals(RESP, client.get(req));
-    assertEquals(RESP, client.get(req));
+    assertThat(client.get(req)).isEqualTo(RESP);
+    assertThat(client.get(req)).isEqualTo(RESP);
 
     verify(base, times(1)).get(eq(req), any());
     verify(cache).put(req.toByteArray(), RESP);
@@ -89,8 +89,8 @@ public class CachedTimeseriesImplTest {
 
     when(cache.getIfPresent(req.toByteArray())).thenReturn(RESP);
 
-    assertEquals(RESP, client.get(req));
-    assertEquals(RESP, client.get(req));
+    assertThat(client.get(req)).isEqualTo(RESP);
+    assertThat(client.get(req)).isEqualTo(RESP);
 
     verify(base, never()).get(eq(req), any());
     verify(cache, never()).put(any(), any());
