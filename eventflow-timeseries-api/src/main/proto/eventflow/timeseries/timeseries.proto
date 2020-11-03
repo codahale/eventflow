@@ -57,9 +57,9 @@ message GetRequest {
 message GetResponse {
   // The epoch second timestamps indicating the beginning of the intervals. These are represented
   // as int64 values so that responses will benefit from packed encoding.
-  repeated int64 timestamps = 2;
+  repeated int64 timestamps = 1;
 
   // The values of the intervals, corresponding in index to timestamps.
-  repeated double values = 3;
+  repeated double values = 2;
 }
 
