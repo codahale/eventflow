@@ -12,6 +12,9 @@ import io.grpc.stub.StreamObserver;
 import java.util.concurrent.TimeUnit;
 
 public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
+  private static final TimestampBound MAX_STALENESS =
+      TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES);
+
   private final DatabaseClient spanner;
 
   public TimeseriesImpl(DatabaseClient spanner) {
@@ -32,10 +35,8 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
             .to(Timestamp.ofTimeMicroseconds(Timestamps.toMicros(request.getEnd())))
             .build();
 
-    try (var results =
-        spanner
-            .singleUseReadOnlyTransaction(TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES))
-            .executeQuery(statement)) {
+    try (var tx = spanner.singleUseReadOnlyTransaction(MAX_STALENESS);
+        var results = tx.executeQuery(statement)) {
       var resp = GetResponse.newBuilder();
       while (results.next()) {
         resp.addTimestamps(results.getTimestamp(0).getSeconds());
@@ -46,18 +47,9 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
     }
   }
 
-  /*
-   CREATE TABLE intervals_minutes (
-     name STRING(1000) NOT NULL,
-     interval_ts TIMESTAMP NOT NULL,
-     insert_id INT64 NOT NULL,
-     value FLOAT64 NOT NULL,
-     insert_ts TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true)
-   ) PRIMARY KEY (name, interval_ts, insert_id)
-  */
-
   private Statement.Builder query(
       GetRequest.Granularity granularity, GetRequest.Aggregation aggregation) {
+
     // Because there may be multiple value rows per interval, aggregation functions other than SUM
     // use a common table expression to materialize the actual minutely intervals in order to be
     // correct. For example, if one interval has two rows of 10 and 20, and another interval has one
