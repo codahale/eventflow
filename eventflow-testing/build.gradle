@@ -9,5 +9,5 @@ dependencies {
 
 	api "com.google.protobuf:protobuf-java:$protobufVersion"
 	api "com.google.protobuf:protobuf-java-util:$protobufVersion"
-	api 'org.apache.avro:avro:1.8.2'
+	api 'org.apache.avro:avro:1.10.0'
 }
