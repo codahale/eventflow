@@ -1,6 +1,5 @@
 package io.eventflow.timeseries.srv;
 
-import com.github.benmanes.caffeine.cache.CaffeineSpec;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.SpannerOptions;
@@ -8,22 +7,21 @@ import com.google.common.io.Resources;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import java.io.IOException;
+import java.net.URI;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import redis.clients.jedis.JedisPool;
 
 public class TimeseriesServer {
   private final Server server;
 
-  public TimeseriesServer(
-      DatabaseClient spanner, int port, CaffeineSpec caffeineSpec, Duration maxCacheAge) {
+  public TimeseriesServer(DatabaseClient spanner, int port, URI redisUri, Duration maxCacheAge) {
     var impl = new TimeseriesImpl(spanner);
-    this.server =
-        ServerBuilder.forPort(port)
-            .addService(
-                new CachedTimeseriesImpl(impl, caffeineSpec, Clock.systemUTC(), maxCacheAge))
-            .build();
+    var cache = new RedisCache(new JedisPool(redisUri));
+    var cached = new CachedTimeseriesImpl(impl, cache, Clock.systemUTC(), maxCacheAge);
+    this.server = ServerBuilder.forPort(port).addService(cached).build();
   }
 
   @SuppressWarnings("CatchAndPrintStackTrace")
@@ -66,9 +64,9 @@ public class TimeseriesServer {
       port = Integer.parseInt(args[3]);
     }
 
-    var cacheSpec = "maximumSize=1000";
+    var redisUri = "redis://localhost:6379";
     if (args.length > 4) {
-      cacheSpec = args[4];
+      redisUri = args[4];
     }
 
     var maxCacheAge = Duration.ofDays(7);
@@ -78,7 +76,7 @@ public class TimeseriesServer {
 
     try (var spanner = SpannerOptions.newBuilder().build().getService()) {
       var client = spanner.getDatabaseClient(DatabaseId.of(project, instance, database));
-      var server = new TimeseriesServer(client, port, CaffeineSpec.parse(cacheSpec), maxCacheAge);
+      var server = new TimeseriesServer(client, port, URI.create(redisUri), maxCacheAge);
       server.start();
       server.blockUntilShutdown();
     }

@@ -1,8 +1,5 @@
 package io.eventflow.timeseries.srv;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.CaffeineSpec;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.timeseries.api.GetRequest;
 import io.eventflow.timeseries.api.GetResponse;
@@ -13,17 +10,17 @@ import java.time.Duration;
 
 public class CachedTimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
   private final TimeseriesGrpc.TimeseriesImplBase base;
-  private final Cache<GetRequest, GetResponse> cache;
+  private final RedisCache cache;
   private final Clock clock;
   private final long minCacheThreshold;
 
   public CachedTimeseriesImpl(
       TimeseriesGrpc.TimeseriesImplBase base,
-      CaffeineSpec caffeineSpec,
+      RedisCache cache,
       Clock clock,
       Duration minCacheThreshold) {
     this.base = base;
-    this.cache = Caffeine.from(caffeineSpec).build();
+    this.cache = cache;
     this.clock = clock;
     this.minCacheThreshold = minCacheThreshold.toMillis();
   }
@@ -31,7 +28,8 @@ public class CachedTimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
   @Override
   public void get(GetRequest request, StreamObserver<GetResponse> responseObserver) {
     if (isCacheable(request)) {
-      var resp = cache.getIfPresent(request);
+      var key = request.toByteArray();
+      var resp = cache.getIfPresent(key);
       if (resp != null) {
         responseObserver.onNext(resp);
         responseObserver.onCompleted();
@@ -41,7 +39,7 @@ public class CachedTimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
             new StreamObserver<>() {
               @Override
               public void onNext(GetResponse value) {
-                cache.put(request, value);
+                cache.put(key, value);
                 responseObserver.onNext(value);
               }
 
