@@ -1,5 +1,7 @@
 package io.eventflow.timeseries.rollups;
 
+import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
+
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.AttributeValues;
@@ -7,7 +9,6 @@ import io.eventflow.common.pb.Event;
 import java.security.SecureRandom;
 import java.text.ParseException;
 import java.time.Duration;
-import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.ToString;
@@ -56,7 +57,7 @@ public class EventAggregatorTest {
             .apply(eventAggregator)
             .apply(ToString.elements());
 
-    PAssert.that(results)
+    assertThat(results)
         .containsInAnyOrder(
             "insert(intervals_minutes{name=three.duration,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=1.32E9,insert_ts=spanner.commit_timestamp()})",
             "insert(intervals_minutes{name=two.int,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=200.0,insert_ts=spanner.commit_timestamp()})",

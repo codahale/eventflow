@@ -1,5 +1,6 @@
 package io.eventflow.ingest;
 
+import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.protobuf.StringValue;
@@ -9,7 +10,6 @@ import io.eventflow.testing.ProtobufAssert;
 import java.util.HashMap;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesAndMessageIdCoder;
-import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.ParDo;
@@ -47,7 +47,7 @@ public class EventToPubsubMessageTest {
     attributes.put("event.timestamp", "1970-01-01T00:03:20Z");
     attributes.put("event.type", "click");
 
-    PAssert.that(messages)
+    assertThat(messages)
         // PubsubMessage, delightfully, doesn't have an equals impl
         .satisfies(
             msgs -> {
@@ -80,7 +80,7 @@ public class EventToPubsubMessageTest {
     attributes.put("event.timestamp", "1970-01-01T00:03:20Z");
     attributes.put("event.type", "click");
 
-    PAssert.that(messages)
+    assertThat(messages)
         // PubsubMessage, delightfully, doesn't have an equals impl
         .satisfies(
             msgs -> {
