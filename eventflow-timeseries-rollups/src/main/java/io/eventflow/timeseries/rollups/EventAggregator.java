@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.util.Durations;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.pb.Event;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.StringJoiner;
@@ -31,8 +32,11 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
   // buckets and then doing some serious backflips in SQL.
   private final ImmutableMultimap<String, String> customRollups;
 
-  public EventAggregator(ImmutableMultimap<String, String> customRollups) {
+  private final SecureRandom random;
+
+  public EventAggregator(ImmutableMultimap<String, String> customRollups, SecureRandom random) {
     this.customRollups = customRollups;
+    this.random = random;
   }
 
   @Override
@@ -41,7 +45,7 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
         .apply("Map To Group Key And Values", ParDo.of(new MapToGroupKeysAndValues(customRollups)))
         .apply("Window By Minute", Window.into(FixedWindows.of(Duration.standardMinutes(1))))
         .apply("Group And Sum", Sum.doublesPerKey())
-        .apply("Map To Mutation", ParDo.of(new MapToStreamingMutation()));
+        .apply("Map To Mutation", ParDo.of(new MapToStreamingMutation(random)));
   }
 
   public static ImmutableMultimap<String, String> parseCustomRollups(String s) {
@@ -114,6 +118,12 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
   private static class MapToStreamingMutation extends DoFn<KV<KV<String, Long>, Double>, Mutation> {
     private static final long serialVersionUID = -7963039695463881759L;
 
+    private final SecureRandom random;
+
+    private MapToStreamingMutation(SecureRandom random) {
+      this.random = random;
+    }
+
     @ProcessElement
     public void processElement(ProcessContext c) {
       var ts = com.google.cloud.Timestamp.ofTimeSecondsAndNanos(c.element().getKey().getValue(), 0);
@@ -124,7 +134,7 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
               .set("interval_ts")
               .to(ts)
               .set("insert_id")
-              .to(c.timestamp().getMillis())
+              .to(random.nextLong())
               .set("value")
               .to(c.element().getValue())
               .set("insert_ts")

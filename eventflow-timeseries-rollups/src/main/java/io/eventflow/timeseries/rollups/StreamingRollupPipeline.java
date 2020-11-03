@@ -3,6 +3,7 @@ package io.eventflow.timeseries.rollups;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import io.eventflow.common.Constants;
 import io.eventflow.common.pb.Event;
+import java.security.SecureRandom;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.extensions.protobuf.ProtoCoder;
@@ -28,7 +29,7 @@ public class StreamingRollupPipeline {
             PubsubIO.readProtos(Event.class)
                 .fromSubscription(parseSubscription(opts.getProject(), opts.getSubscription()))
                 .withIdAttribute(Constants.ID_ATTRIBUTE))
-        .apply("Aggregate Events", new EventAggregator(customRollups))
+        .apply("Aggregate Events", new EventAggregator(customRollups, new SecureRandom()))
         .apply(
             "Write To Spanner",
             SpannerIO.write()

@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.AttributeValues;
 import io.eventflow.common.pb.Event;
+import java.security.SecureRandom;
 import java.text.ParseException;
 import java.time.Duration;
 import org.apache.beam.sdk.testing.PAssert;
@@ -20,7 +21,8 @@ public class EventAggregatorTest {
 
   private final ImmutableMultimap<String, String> customRollups =
       EventAggregator.parseCustomRollups("two=int,two=float,three=duration");
-  private final EventAggregator eventAggregator = new EventAggregator(customRollups);
+  private final EventAggregator eventAggregator =
+      new EventAggregator(customRollups, new FakeRandom());
 
   @Test
   public void endToEnd() throws ParseException {
@@ -56,13 +58,22 @@ public class EventAggregatorTest {
 
     PAssert.that(results)
         .containsInAnyOrder(
-            "insert(intervals_minutes{name=three.duration,interval_ts=2020-11-01T12:24:00Z,insert_id=2279999,value=1.32E9,insert_ts=spanner.commit_timestamp()})",
-            "insert(intervals_minutes{name=two.int,interval_ts=2020-11-01T12:24:00Z,insert_id=2279999,value=200.0,insert_ts=spanner.commit_timestamp()})",
-            "insert(intervals_minutes{name=two.float,interval_ts=2020-11-01T12:24:00Z,insert_id=2279999,value=404.0,insert_ts=spanner.commit_timestamp()})",
-            "insert(intervals_minutes{name=three.count,interval_ts=2020-11-01T12:24:00Z,insert_id=2279999,value=1.0,insert_ts=spanner.commit_timestamp()})",
-            "insert(intervals_minutes{name=one.count,interval_ts=2020-11-01T12:23:00Z,insert_id=2279999,value=2.0,insert_ts=spanner.commit_timestamp()})",
-            "insert(intervals_minutes{name=two.count,interval_ts=2020-11-01T12:24:00Z,insert_id=2279999,value=1.0,insert_ts=spanner.commit_timestamp()})");
+            "insert(intervals_minutes{name=three.duration,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=1.32E9,insert_ts=spanner.commit_timestamp()})",
+            "insert(intervals_minutes{name=two.int,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=200.0,insert_ts=spanner.commit_timestamp()})",
+            "insert(intervals_minutes{name=two.float,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=404.0,insert_ts=spanner.commit_timestamp()})",
+            "insert(intervals_minutes{name=three.count,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=1.0,insert_ts=spanner.commit_timestamp()})",
+            "insert(intervals_minutes{name=one.count,interval_ts=2020-11-01T12:23:00Z,insert_id=12345,value=2.0,insert_ts=spanner.commit_timestamp()})",
+            "insert(intervals_minutes{name=two.count,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=1.0,insert_ts=spanner.commit_timestamp()})");
 
     pipeline.run();
+  }
+
+  private static class FakeRandom extends SecureRandom {
+    private static final long serialVersionUID = 1510630497569983702L;
+
+    @Override
+    public long nextLong() {
+      return 12345;
+    }
   }
 }
