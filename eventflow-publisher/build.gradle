@@ -7,7 +7,4 @@ dependencies {
 	api "com.google.protobuf:protobuf-java:$protobufVersion"
 	api "com.google.protobuf:protobuf-java-util:$protobufVersion"
 	api 'com.google.cloud:google-cloud-pubsub:1.108.7'
-
-	testImplementation "junit:junit:$junitVersion"
-	testImplementation "org.mockito:mockito-core:$mockitoVersion"
 }

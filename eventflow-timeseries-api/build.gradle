@@ -11,8 +11,6 @@ dependencies {
 
 	compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 
-	testImplementation "junit:junit:$junitVersion"
-	testImplementation "org.mockito:mockito-core:$mockitoVersion"
 	testImplementation "io.grpc:grpc-testing:$grpcVersion"
 }
 
