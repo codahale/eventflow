@@ -61,5 +61,8 @@ message GetResponse {
 
   // The values of the intervals, corresponding in index to timestamps.
   repeated double values = 2;
+
+  // The read timestamp of the Spanner transaction, setting the upper bound for staleness.
+  google.protobuf.Timestamp read_timestamp = 3;
 }
 

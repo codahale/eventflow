@@ -2,7 +2,7 @@ package io.eventflow.timeseries.srv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.Timestamp;
@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
@@ -46,8 +47,8 @@ public class TimeseriesImplTest {
 
   @Test
   public void getMinutelySum() {
-    when(tx.executeQuery(any()))
-        .thenReturn(
+    var rs =
+        spy(
             ResultSets.forRows(
                 Type.struct(
                     Type.StructField.of("n0", Type.timestamp()),
@@ -65,6 +66,9 @@ public class TimeseriesImplTest {
                         .set("n1")
                         .to(56.789d)
                         .build())));
+
+    when(tx.executeQuery(any())).thenReturn(rs);
+    when(tx.getReadTimestamp()).thenReturn(Timestamp.ofTimeSecondsAndNanos(12345678, 0));
     when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES)))
         .thenReturn(tx);
 
@@ -84,7 +88,9 @@ public class TimeseriesImplTest {
                 ZonedDateTime.of(2020, 10, 29, 18, 0, 0, 0, timeZone), 123.4d,
                 ZonedDateTime.of(2020, 10, 29, 18, 1, 0, 0, timeZone), 56.789d));
 
-    verify(tx)
+    var inOrder = Mockito.inOrder(tx, rs);
+    inOrder
+        .verify(tx)
         .executeQuery(
             Statement.newBuilder(
                     "SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz), SUM(value) AS value FROM intervals_minutes WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1 ORDER BY 1")
@@ -97,12 +103,14 @@ public class TimeseriesImplTest {
                 .bind("end")
                 .to(Timestamp.parseTimestamp("2020-10-31T00:00:00Z"))
                 .build());
+    inOrder.verify(rs).close();
+    inOrder.verify(tx).close();
   }
 
   @Test
   public void getHourlyAvg() {
-    when(tx.executeQuery(any()))
-        .thenReturn(
+    var rs =
+        spy(
             ResultSets.forRows(
                 Type.struct(
                     Type.StructField.of("n0", Type.timestamp()),
@@ -120,6 +128,8 @@ public class TimeseriesImplTest {
                         .set("n1")
                         .to(56.789d)
                         .build())));
+    when(tx.executeQuery(any())).thenReturn(rs);
+    when(tx.getReadTimestamp()).thenReturn(Timestamp.ofTimeSecondsAndNanos(12345678, 0));
     when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES)))
         .thenReturn(tx);
 
@@ -139,7 +149,9 @@ public class TimeseriesImplTest {
                 ZonedDateTime.of(2020, 10, 29, 18, 0, 0, 0, timeZone), 123.4d,
                 ZonedDateTime.of(2020, 10, 29, 18, 1, 0, 0, timeZone), 56.789d));
 
-    verify(tx)
+    var inOrder = Mockito.inOrder(tx, rs);
+    inOrder
+        .verify(tx)
         .executeQuery(
             Statement.newBuilder(
                     "WITH intervals AS (SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts, SUM(value) AS value FROM intervals_minutes WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1) SELECT TIMESTAMP_TRUNC(interval_ts, HOUR, @tz), AVG(value) FROM intervals GROUP BY 1 ORDER BY 1")
@@ -152,5 +164,7 @@ public class TimeseriesImplTest {
                 .bind("end")
                 .to(Timestamp.parseTimestamp("2020-10-31T00:00:00Z"))
                 .build());
+    inOrder.verify(rs).close();
+    inOrder.verify(tx).close();
   }
 }

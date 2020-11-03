@@ -37,7 +37,7 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
 
     try (var tx = spanner.singleUseReadOnlyTransaction(MAX_STALENESS);
         var results = tx.executeQuery(statement)) {
-      var resp = GetResponse.newBuilder();
+      var resp = GetResponse.newBuilder().setReadTimestamp(tx.getReadTimestamp().toProto());
       while (results.next()) {
         resp.addTimestamps(results.getTimestamp(0).getSeconds());
         resp.addValues(results.getDouble(1));
