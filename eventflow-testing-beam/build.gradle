@@ -4,5 +4,5 @@ plugins {
 
 dependencies {
 	api project(':eventflow-testing')
-	api "org.apache.beam:beam-sdks-java-test-utils:$beamVersion"
+	api "org.apache.beam:beam-sdks-java-core:$beamVersion"
 }
