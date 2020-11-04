@@ -18,15 +18,22 @@ package io.eventflow.timeseries.rollups;
 import com.google.cloud.spanner.Mutation;
 import com.google.cloud.spanner.Value;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableTable;
 import com.google.protobuf.util.Durations;
 import com.google.protobuf.util.Timestamps;
+import io.eventflow.common.pb.AttributeValue;
 import io.eventflow.common.pb.Event;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.StringJoiner;
+import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.Flatten;
+import org.apache.beam.sdk.transforms.Max;
+import org.apache.beam.sdk.transforms.Min;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Sum;
@@ -34,40 +41,78 @@ import org.apache.beam.sdk.transforms.windowing.FixedWindows;
 import org.apache.beam.sdk.transforms.windowing.Window;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PCollectionList;
+import org.apache.beam.sdk.values.TupleTag;
+import org.apache.beam.sdk.values.TupleTagList;
 import org.joda.time.Duration;
 
 public class EventAggregator extends PTransform<PCollection<Event>, PCollection<Mutation>> {
   private static final long serialVersionUID = -4941981619223641177L;
 
-  // TODO figure out how to support more than just sums
-  // Internally, this would be parsing custom rollups as event.type=max(attr_name) into an
-  // ImmutableTable<String, String, TupleTag>, doing per-function aggregations during the window,
-  // recombining for the write to Spanner. This would support sums, maxes, and mins. Averages can
-  // be supported as-is by dividing sums by counts. Support for percentiles would require storing
-  // buckets and then doing some serious backflips in SQL.
-  private final ImmutableMultimap<String, String> customRollups;
+  private static final TupleTag<KV<KV<String, Long>, Double>> SUM =
+      new TupleTag<>("sum") {
+        private static final long serialVersionUID = 365666602980929507L;
+      };
+
+  private static final TupleTag<KV<KV<String, Long>, Double>> MIN =
+      new TupleTag<>("min") {
+        private static final long serialVersionUID = 365666602980929507L;
+      };
+
+  private static final TupleTag<KV<KV<String, Long>, Double>> MAX =
+      new TupleTag<>("max") {
+        private static final long serialVersionUID = 365666602980929507L;
+      };
+
+  private final ImmutableTable<String, String, TupleTag<KV<KV<String, Long>, Double>>> rollups;
 
   private final SecureRandom random;
 
-  public EventAggregator(ImmutableMultimap<String, String> customRollups, SecureRandom random) {
-    this.customRollups = customRollups;
+  public EventAggregator(
+      ImmutableTable<String, String, TupleTag<KV<KV<String, Long>, Double>>> rollups,
+      SecureRandom random) {
+    this.rollups = rollups;
     this.random = random;
   }
 
   @Override
   public PCollection<Mutation> expand(PCollection<Event> input) {
-    return input
-        .apply("Map To Group Key And Values", ParDo.of(new MapToGroupKeysAndValues(customRollups)))
-        .apply("Window By Minute", Window.into(FixedWindows.of(Duration.standardMinutes(1))))
-        .apply("Group And Sum", Sum.doublesPerKey())
+    var values =
+        input
+            .apply("Widow By Minute", Window.into(FixedWindows.of(Duration.standardMinutes(1))))
+            .apply(
+                "Map To Group Key And Values",
+                ParDo.of(new MapToGroupKeysAndValues(rollups))
+                    .withOutputTags(SUM, TupleTagList.of(List.of(MIN, MAX))));
+
+    return PCollectionList.of(
+            List.of(
+                values.get(SUM).apply("Sum Values", Sum.doublesPerKey()),
+                values.get(MIN).apply("Min Values", Min.doublesPerKey()),
+                values.get(MAX).apply("Max Values", Max.doublesPerKey())))
+        .apply("Flatten", Flatten.pCollections())
         .apply("Map To Mutation", ParDo.of(new MapToStreamingMutation(random)));
   }
 
-  public static ImmutableMultimap<String, String> parseCustomRollups(String s) {
-    var builder = ImmutableMultimap.<String, String>builder();
+  private static final Pattern ROLLUP = Pattern.compile("^(sum|max|min)\\((.+)\\)$");
+
+  public static ImmutableTable<String, String, TupleTag<KV<KV<String, Long>, Double>>> parseRollups(
+      String s) {
+    var builder = ImmutableTable.<String, String, TupleTag<KV<KV<String, Long>, Double>>>builder();
     for (String custom : Splitter.on(',').split(s)) {
       var parts = Splitter.on('=').limit(2).splitToList(custom);
-      builder.put(parts.get(0), parts.get(1));
+      var matcher = ROLLUP.matcher(parts.get(1));
+      if (!matcher.matches()) {
+        throw new IllegalArgumentException("bad rollup: " + parts.get(1));
+      }
+
+      if (matcher.group(1).equals(MIN.getId())) {
+        builder.put(parts.get(0), matcher.group(2), MIN);
+      } else if (matcher.group(1).equals(MAX.getId())) {
+        builder.put(parts.get(0), matcher.group(2), MAX);
+      } else {
+        builder.put(parts.get(0), matcher.group(2), SUM);
+      }
     }
     return builder.build();
   }
@@ -75,10 +120,11 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
   private static class MapToGroupKeysAndValues extends DoFn<Event, KV<KV<String, Long>, Double>> {
     private static final long serialVersionUID = -3444438370108834605L;
 
-    private final ImmutableMultimap<String, String> customAggregates;
+    private final ImmutableTable<String, String, TupleTag<KV<KV<String, Long>, Double>>> rollups;
 
-    public MapToGroupKeysAndValues(ImmutableMultimap<String, String> customAggregates) {
-      this.customAggregates = customAggregates;
+    public MapToGroupKeysAndValues(
+        ImmutableTable<String, String, TupleTag<KV<KV<String, Long>, Double>>> rollups) {
+      this.rollups = rollups;
     }
 
     @ProcessElement
@@ -87,40 +133,46 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
       var ts = truncate(event.getTimestamp());
 
       // Record the count.
-      c.output(KV.of(KV.of(metricName(event, "count"), ts), 1.0));
+      c.output(SUM, KV.of(KV.of(metricName(event, "count"), ts), 1.0));
 
-      // Record all custom aggregates.
-      for (String name : customAggregates.get(event.getType())) {
+      // Record all other rollups.
+      for (var rollup : rollups.row(event.getType()).entrySet()) {
+        var name = rollup.getKey();
         var value = event.getAttributesMap().get(name);
         if (value != null) {
-          var key = KV.of(metricName(event, name), ts);
-          switch (value.getValueCase()) {
-            case BOOL_VALUE:
-            case STRING_VALUE:
-            case BYTES_VALUE:
-            case TIMESTAMP_VALUE:
-            case VALUE_NOT_SET:
-              break;
-            case INT_VALUE:
-              c.output(KV.of(key, (double) value.getIntValue()));
-              break;
-            case FLOAT_VALUE:
-              c.output(KV.of(key, value.getFloatValue()));
-              break;
-            case DURATION_VALUE:
-              c.output(KV.of(key, (double) Durations.toMicros(value.getDurationValue())));
-              break;
+          var key = KV.of(metricName(event, name, rollup.getValue().getId()), ts);
+          var output = extractValue(value);
+          if (output != null) {
+            c.output(rollup.getValue(), KV.of(key, output));
           }
         }
       }
     }
 
-    private String metricName(Event event, String name) {
+    @Nullable
+    private Double extractValue(AttributeValue value) {
+      switch (value.getValueCase()) {
+        case INT_VALUE:
+          return (double) value.getIntValue();
+        case FLOAT_VALUE:
+          return value.getFloatValue();
+        case DURATION_VALUE:
+          return (double) Durations.toMicros(value.getDurationValue());
+        default:
+          return null;
+      }
+    }
+
+    private String metricName(Event event, String... names) {
       var j = new StringJoiner(".").add(event.getType());
       if (event.hasCustomer()) {
         j.add(event.getCustomer().getValue());
       }
-      return j.add(name).toString();
+
+      for (String name : names) {
+        j.add(name);
+      }
+      return j.toString();
     }
 
     private long truncate(com.google.protobuf.Timestamp timestamp) {

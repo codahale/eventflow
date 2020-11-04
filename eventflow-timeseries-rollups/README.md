@@ -2,8 +2,11 @@
 
 eventflow-timeseries-rollups contains a streaming Dataflow job which pulls validated events from a
 Pub/Sub subscription, aggregates them on a minutely basis, and writes the resulting time series
-intervals to Spanner. It supports counts of all events, plus custom rollup types to sum attribute
-values.
+intervals to Spanner. It supports counts of all events, plus custom rollup types to sum/min/max
+attribute values. In each case, the type of rollup is added to the event type and attribute name to
+form a globally unique time series name. For example, rolling up the `high_score` attribute values
+by `max` of the `game_finished` event type will produce a time series named
+`game_finished.high_score.max`.
 
 It expects there to be a table in the Spanner database with the following name and schema:
 

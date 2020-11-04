@@ -65,6 +65,8 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
   private Statement.Builder query(
       GetRequest.Granularity granularity, GetRequest.Aggregation aggregation) {
 
+    // TODO support min and max operators
+
     // Because there may be multiple value rows per interval, aggregation functions other than SUM
     // use a common table expression to materialize the actual minutely intervals in order to be
     // correct. For example, if one interval has two rows of 10 and 20, and another interval has one

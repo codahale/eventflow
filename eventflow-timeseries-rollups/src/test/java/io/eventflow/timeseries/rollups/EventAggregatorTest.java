@@ -17,7 +17,7 @@ package io.eventflow.timeseries.rollups;
 
 import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
 
-import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableTable;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.AttributeValues;
 import io.eventflow.common.pb.Event;
@@ -28,6 +28,8 @@ import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.ToString;
 import org.apache.beam.sdk.transforms.WithTimestamps;
+import org.apache.beam.sdk.values.KV;
+import org.apache.beam.sdk.values.TupleTag;
 import org.joda.time.Instant;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,10 +37,9 @@ import org.junit.Test;
 public class EventAggregatorTest {
   @Rule public final TestPipeline pipeline = TestPipeline.create();
 
-  private final ImmutableMultimap<String, String> customRollups =
-      EventAggregator.parseCustomRollups("two=int,two=float,three=duration");
-  private final EventAggregator eventAggregator =
-      new EventAggregator(customRollups, new FakeRandom());
+  private final ImmutableTable<String, String, TupleTag<KV<KV<String, Long>, Double>>> rollups =
+      EventAggregator.parseRollups("two=max(int),two=min(float),three=sum(duration)");
+  private final EventAggregator eventAggregator = new EventAggregator(rollups, new FakeRandom());
 
   @Test
   public void endToEnd() throws ParseException {
@@ -61,6 +62,12 @@ public class EventAggregatorTest {
                         .putAttributes("float", AttributeValues.floatValue(404))
                         .build(),
                     Event.newBuilder()
+                        .setType("two")
+                        .setTimestamp(Timestamps.parse("2020-11-01T12:24:03Z"))
+                        .putAttributes("int", AttributeValues.intValue(100))
+                        .putAttributes("float", AttributeValues.floatValue(300))
+                        .build(),
+                    Event.newBuilder()
                         .setType("three")
                         .setTimestamp(Timestamps.parse("2020-11-01T12:24:59Z"))
                         .putAttributes("int", AttributeValues.intValue(200))
@@ -74,12 +81,12 @@ public class EventAggregatorTest {
 
     assertThat(results)
         .containsInAnyOrder(
-            "insert(intervals_minutes{name=three.duration,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=1.32E9,insert_ts=spanner.commit_timestamp()})",
-            "insert(intervals_minutes{name=two.int,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=200.0,insert_ts=spanner.commit_timestamp()})",
-            "insert(intervals_minutes{name=two.float,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=404.0,insert_ts=spanner.commit_timestamp()})",
+            "insert(intervals_minutes{name=three.duration.sum,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=1.32E9,insert_ts=spanner.commit_timestamp()})",
+            "insert(intervals_minutes{name=two.int.max,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=200.0,insert_ts=spanner.commit_timestamp()})",
+            "insert(intervals_minutes{name=two.float.min,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=300.0,insert_ts=spanner.commit_timestamp()})",
             "insert(intervals_minutes{name=three.count,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=1.0,insert_ts=spanner.commit_timestamp()})",
             "insert(intervals_minutes{name=one.count,interval_ts=2020-11-01T12:23:00Z,insert_id=12345,value=2.0,insert_ts=spanner.commit_timestamp()})",
-            "insert(intervals_minutes{name=two.count,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=1.0,insert_ts=spanner.commit_timestamp()})");
+            "insert(intervals_minutes{name=two.count,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=2.0,insert_ts=spanner.commit_timestamp()})");
 
     pipeline.run();
   }
