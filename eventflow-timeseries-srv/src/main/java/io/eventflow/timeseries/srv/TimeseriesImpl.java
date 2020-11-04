@@ -39,7 +39,10 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
   @Override
   public void get(GetRequest request, StreamObserver<GetResponse> responseObserver) {
     var statement =
-        query(request.getGranularity(), request.getAggregation())
+        query(
+                request.getName(),
+                granPart(request.getGranularity()),
+                aggFunc(request.getAggregation()))
             .bind("name")
             .to(request.getName())
             .bind("tz")
@@ -62,42 +65,30 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
     }
   }
 
-  private Statement.Builder query(
-      GetRequest.Granularity granularity, GetRequest.Aggregation aggregation) {
+  private Statement.Builder query(String name, String granPart, String aggFunc) {
 
-    // TODO support min and max operators
-
-    // Because there may be multiple value rows per interval, aggregation functions other than SUM
-    // use a common table expression to materialize the actual minutely intervals in order to be
-    // correct. For example, if one interval has two rows of 10 and 20, and another interval has one
-    // row of 21, the MAX of those two intervals should be 30, not 21. But because SUM is what's
-    // needed to aggregate the value rows, we can special-case SUM queries to avoid the overhead of
-    // the CTE.
-
-    if (aggregation == GetRequest.Aggregation.AGG_SUM) {
-      return Statement.newBuilder("SELECT TIMESTAMP_TRUNC(interval_ts, ")
-          .append(granPart(granularity))
-          .append(", @tz), SUM(value) AS value")
-          .append(" FROM intervals_minutes")
-          .append(" WHERE name = @name")
-          .append(" AND interval_ts BETWEEN @start AND @end")
-          .append(" GROUP BY 1")
-          .append(" ORDER BY 1");
+    // Detect the interval aggregation type based on name.
+    var intervalAggFunc = "SUM(value)";
+    if (name.endsWith(".min")) {
+      intervalAggFunc = "MIN(value)";
+    } else if (name.endsWith(".max")) {
+      intervalAggFunc = "MIN(value)";
     }
 
     return Statement.newBuilder("WITH intervals AS (")
-        .append("SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts,")
-        .append(" SUM(value) AS value")
+        .append("SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts, ")
+        .append(intervalAggFunc)
+        .append(" AS value")
         .append(" FROM intervals_minutes")
         .append(" WHERE name = @name")
         .append(" AND interval_ts BETWEEN @start AND @end")
         .append(" GROUP BY 1")
         .append(")")
         .append(" SELECT TIMESTAMP_TRUNC(interval_ts, ")
-        .append(granPart(granularity))
+        .append(granPart)
         .append(", @tz), ")
-        .append(aggFunc(aggregation))
-        .append("(value) FROM intervals GROUP BY 1 ORDER BY 1");
+        .append(aggFunc)
+        .append(" FROM intervals GROUP BY 1 ORDER BY 1");
   }
 
   private String granPart(GetRequest.Granularity granularity) {
@@ -132,13 +123,13 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
       case AGG_UNKNOWN:
         throw new IllegalArgumentException("missing aggregation function");
       case AGG_SUM:
-        return "SUM";
+        return "SUM(value)";
       case AGG_MAX:
-        return "MAX";
+        return "MAX(value)";
       case AGG_MIN:
-        return "MIN";
+        return "MIN(value)";
       case AGG_AVG:
-        return "AVG";
+        return "AVG(value)";
       default:
         throw new IllegalArgumentException("unrecognized aggregation function");
     }
