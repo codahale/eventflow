@@ -1,5 +1,5 @@
 plugins {
-    `java-gradle-plugin`
+    id("java-gradle-plugin")
 }
 
 repositories {
