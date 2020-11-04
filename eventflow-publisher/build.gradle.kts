@@ -1,4 +1,4 @@
-import io.eventflow.build.Versions
+import io.eventflow.Versions
 
 plugins {
     id("java-library")

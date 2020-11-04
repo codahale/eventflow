@@ -4,7 +4,7 @@ import com.google.protobuf.gradle.ofSourceSet
 import com.google.protobuf.gradle.plugins
 import com.google.protobuf.gradle.protobuf
 import com.google.protobuf.gradle.protoc
-import io.eventflow.build.Versions
+import io.eventflow.Versions
 
 plugins {
     id("java-library")

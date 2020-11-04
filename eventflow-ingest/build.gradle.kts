@@ -1,6 +1,6 @@
 import com.google.protobuf.gradle.protobuf
 import com.google.protobuf.gradle.protoc
-import io.eventflow.build.Versions
+import io.eventflow.Versions
 
 plugins {
     id("application")
