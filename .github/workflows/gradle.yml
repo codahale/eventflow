@@ -17,7 +17,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}-${{ hashFiles('buildSrc/*.java') }}
           restore-keys: ${{ runner.os }}-gradle
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
