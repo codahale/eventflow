@@ -73,10 +73,6 @@ allprojects {
             })
         }
 
-        groovyGradle {
-            greclipse()
-        }
-
         kotlin {
             ktfmt()
         }
