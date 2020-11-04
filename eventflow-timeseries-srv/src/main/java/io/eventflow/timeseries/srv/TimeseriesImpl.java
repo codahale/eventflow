@@ -19,7 +19,6 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.Statement;
 import com.google.cloud.spanner.TimestampBound;
-import com.google.protobuf.util.Timestamps;
 import io.eventflow.timeseries.api.GetRequest;
 import io.eventflow.timeseries.api.GetResponse;
 import io.eventflow.timeseries.api.TimeseriesGrpc;
@@ -39,18 +38,28 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
   @Override
   public void get(GetRequest request, StreamObserver<GetResponse> responseObserver) {
     var statement =
-        query(
-                request.getName(),
-                granPart(request.getGranularity()),
-                aggFunc(request.getAggregation()))
+        Statement.newBuilder("WITH intervals AS (")
+            .append("SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts, ")
+            .append(intervalAggFunc(request.getName()))
+            .append(" AS value")
+            .append(" FROM intervals_minutes")
+            .append(" WHERE name = @name")
+            .append(" AND interval_ts BETWEEN @start AND @end")
+            .append(" GROUP BY 1")
+            .append(")")
+            .append(" SELECT TIMESTAMP_TRUNC(interval_ts, ")
+            .append(granPart(request.getGranularity()))
+            .append(", @tz), ")
+            .append(aggFunc(request.getAggregation()))
+            .append(" FROM intervals GROUP BY 1 ORDER BY 1")
             .bind("name")
             .to(request.getName())
             .bind("tz")
             .to(request.getTimeZone())
             .bind("start")
-            .to(Timestamp.ofTimeMicroseconds(Timestamps.toMicros(request.getStart())))
+            .to(Timestamp.fromProto(request.getStart()))
             .bind("end")
-            .to(Timestamp.ofTimeMicroseconds(Timestamps.toMicros(request.getEnd())))
+            .to(Timestamp.fromProto(request.getEnd()))
             .build();
 
     try (var tx = spanner.singleUseReadOnlyTransaction(MAX_STALENESS);
@@ -65,30 +74,14 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
     }
   }
 
-  private Statement.Builder query(String name, String granPart, String aggFunc) {
-
-    // Detect the interval aggregation type based on name.
-    var intervalAggFunc = "SUM(value)";
+  // Detect the interval aggregation function based on the metric name.
+  private String intervalAggFunc(String name) {
     if (name.endsWith(".min")) {
-      intervalAggFunc = "MIN(value)";
+      return "MIN(value)";
     } else if (name.endsWith(".max")) {
-      intervalAggFunc = "MIN(value)";
+      return "MIN(value)";
     }
-
-    return Statement.newBuilder("WITH intervals AS (")
-        .append("SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts, ")
-        .append(intervalAggFunc)
-        .append(" AS value")
-        .append(" FROM intervals_minutes")
-        .append(" WHERE name = @name")
-        .append(" AND interval_ts BETWEEN @start AND @end")
-        .append(" GROUP BY 1")
-        .append(")")
-        .append(" SELECT TIMESTAMP_TRUNC(interval_ts, ")
-        .append(granPart)
-        .append(", @tz), ")
-        .append(aggFunc)
-        .append(" FROM intervals GROUP BY 1 ORDER BY 1");
+    return "SUM(value)";
   }
 
   private String granPart(GetRequest.Granularity granularity) {
