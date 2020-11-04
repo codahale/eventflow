@@ -37,7 +37,7 @@ public class StreamingRollupPipeline {
     var coders = pipeline.getCoderRegistry();
     coders.registerCoderForClass(Event.class, ProtoCoder.of(Event.class));
 
-    var customRollups = EventAggregator.parseRollups(opts.getCustomRollups());
+    var customRollups = RollupSpec.parse(opts.getCustomRollups());
     pipeline
         .apply(
             "Read Events",

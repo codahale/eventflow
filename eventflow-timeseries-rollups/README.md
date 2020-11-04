@@ -6,7 +6,13 @@ intervals to Spanner. It supports counts of all events, plus custom rollup types
 attribute values. In each case, the type of rollup is added to the event type and attribute name to
 form a globally unique time series name. For example, rolling up the `high_score` attribute values
 by `max` of the `game_finished` event type will produce a time series named
-`game_finished.high_score.max`.
+`game_finished.high_score.max`. Rollups are specified via a comma-separated list of mappings:
+
+```
+event_type:func(attribute_name)
+```
+
+Where `func` can be one of three options: `MIN`, `MAX`, and `SUM`.
 
 It expects there to be a table in the Spanner database with the following name and schema:
 

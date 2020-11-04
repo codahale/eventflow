@@ -17,7 +17,6 @@ package io.eventflow.timeseries.rollups;
 
 import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
 
-import com.google.common.collect.ImmutableTable;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.AttributeValues;
 import io.eventflow.common.pb.Event;
@@ -28,8 +27,6 @@ import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.ToString;
 import org.apache.beam.sdk.transforms.WithTimestamps;
-import org.apache.beam.sdk.values.KV;
-import org.apache.beam.sdk.values.TupleTag;
 import org.joda.time.Instant;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,8 +34,8 @@ import org.junit.Test;
 public class EventAggregatorTest {
   @Rule public final TestPipeline pipeline = TestPipeline.create();
 
-  private final ImmutableTable<String, String, TupleTag<KV<KV<String, Long>, Double>>> rollups =
-      EventAggregator.parseRollups("two=max(int),two=min(float),three=sum(duration)");
+  private final RollupSpec rollups =
+      RollupSpec.parse("two:max(int),two:min(float),three:sum(duration)");
   private final EventAggregator eventAggregator = new EventAggregator(rollups, new FakeRandom());
 
   @Test

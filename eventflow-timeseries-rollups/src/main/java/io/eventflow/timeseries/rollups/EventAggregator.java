@@ -17,8 +17,6 @@ package io.eventflow.timeseries.rollups;
 
 import com.google.cloud.spanner.Mutation;
 import com.google.cloud.spanner.Value;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableTable;
 import com.google.protobuf.util.Durations;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.pb.AttributeValue;
@@ -28,7 +26,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.StringJoiner;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.Flatten;
@@ -42,36 +39,18 @@ import org.apache.beam.sdk.transforms.windowing.Window;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionList;
-import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.joda.time.Duration;
 
 public class EventAggregator extends PTransform<PCollection<Event>, PCollection<Mutation>> {
   private static final long serialVersionUID = -4941981619223641177L;
 
-  private static final TupleTag<KV<KV<String, Long>, Double>> SUM =
-      new TupleTag<>("sum") {
-        private static final long serialVersionUID = 365666602980929507L;
-      };
-
-  private static final TupleTag<KV<KV<String, Long>, Double>> MIN =
-      new TupleTag<>("min") {
-        private static final long serialVersionUID = 365666602980929507L;
-      };
-
-  private static final TupleTag<KV<KV<String, Long>, Double>> MAX =
-      new TupleTag<>("max") {
-        private static final long serialVersionUID = 365666602980929507L;
-      };
-
-  private final ImmutableTable<String, String, TupleTag<KV<KV<String, Long>, Double>>> rollups;
+  private final RollupSpec rollupSpec;
 
   private final SecureRandom random;
 
-  public EventAggregator(
-      ImmutableTable<String, String, TupleTag<KV<KV<String, Long>, Double>>> rollups,
-      SecureRandom random) {
-    this.rollups = rollups;
+  public EventAggregator(RollupSpec rollupSpec, SecureRandom random) {
+    this.rollupSpec = rollupSpec;
     this.random = random;
   }
 
@@ -82,49 +61,26 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
             .apply("Widow By Minute", Window.into(FixedWindows.of(Duration.standardMinutes(1))))
             .apply(
                 "Map To Group Key And Values",
-                ParDo.of(new MapToGroupKeysAndValues(rollups))
-                    .withOutputTags(SUM, TupleTagList.of(List.of(MIN, MAX))));
+                ParDo.of(new MapToGroupKeysAndValues(rollupSpec))
+                    .withOutputTags(
+                        RollupSpec.SUM, TupleTagList.of(List.of(RollupSpec.MIN, RollupSpec.MAX))));
 
     return PCollectionList.of(
             List.of(
-                values.get(SUM).apply("Sum Values", Sum.doublesPerKey()),
-                values.get(MIN).apply("Min Values", Min.doublesPerKey()),
-                values.get(MAX).apply("Max Values", Max.doublesPerKey())))
+                values.get(RollupSpec.SUM).apply("Sum Values", Sum.doublesPerKey()),
+                values.get(RollupSpec.MIN).apply("Min Values", Min.doublesPerKey()),
+                values.get(RollupSpec.MAX).apply("Max Values", Max.doublesPerKey())))
         .apply("Flatten", Flatten.pCollections())
         .apply("Map To Mutation", ParDo.of(new MapToStreamingMutation(random)));
-  }
-
-  private static final Pattern ROLLUP = Pattern.compile("^(sum|max|min)\\((.+)\\)$");
-
-  public static ImmutableTable<String, String, TupleTag<KV<KV<String, Long>, Double>>> parseRollups(
-      String s) {
-    var builder = ImmutableTable.<String, String, TupleTag<KV<KV<String, Long>, Double>>>builder();
-    for (String custom : Splitter.on(',').split(s)) {
-      var parts = Splitter.on('=').limit(2).splitToList(custom);
-      var matcher = ROLLUP.matcher(parts.get(1));
-      if (!matcher.matches()) {
-        throw new IllegalArgumentException("bad rollup: " + parts.get(1));
-      }
-
-      if (matcher.group(1).equals(MIN.getId())) {
-        builder.put(parts.get(0), matcher.group(2), MIN);
-      } else if (matcher.group(1).equals(MAX.getId())) {
-        builder.put(parts.get(0), matcher.group(2), MAX);
-      } else {
-        builder.put(parts.get(0), matcher.group(2), SUM);
-      }
-    }
-    return builder.build();
   }
 
   private static class MapToGroupKeysAndValues extends DoFn<Event, KV<KV<String, Long>, Double>> {
     private static final long serialVersionUID = -3444438370108834605L;
 
-    private final ImmutableTable<String, String, TupleTag<KV<KV<String, Long>, Double>>> rollups;
+    private final RollupSpec rollupSpec;
 
-    public MapToGroupKeysAndValues(
-        ImmutableTable<String, String, TupleTag<KV<KV<String, Long>, Double>>> rollups) {
-      this.rollups = rollups;
+    public MapToGroupKeysAndValues(RollupSpec rollupSpec) {
+      this.rollupSpec = rollupSpec;
     }
 
     @ProcessElement
@@ -133,10 +89,10 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
       var ts = truncate(event.getTimestamp());
 
       // Record the count.
-      c.output(SUM, KV.of(KV.of(metricName(event, "count"), ts), 1.0));
+      c.output(RollupSpec.SUM, KV.of(KV.of(metricName(event, "count"), ts), 1.0));
 
       // Record all other rollups.
-      for (var rollup : rollups.row(event.getType()).entrySet()) {
+      for (var rollup : rollupSpec.rollups(event.getType())) {
         var name = rollup.getKey();
         var value = event.getAttributesMap().get(name);
         if (value != null) {
