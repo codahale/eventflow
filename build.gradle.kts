@@ -65,6 +65,7 @@ allprojects {
     }
 
     spotless {
+        ratchetFrom("origin/main")
         java {
             licenseHeader("""
     /*
