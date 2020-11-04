@@ -1,6 +1,7 @@
 package io.eventflow.ingest;
 
 import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
+import static io.eventflow.testing.beam.PCollectionAssert.forEach;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.protobuf.StringValue;
@@ -48,17 +49,14 @@ public class EventToPubsubMessageTest {
     attributes.put("event.type", "click");
 
     assertThat(messages)
-        // PubsubMessage, delightfully, doesn't have an equals impl
         .satisfies(
-            msgs -> {
-              for (PubsubMessage msg : msgs) {
-                assertThat(msg.getAttributeMap()).isEqualTo(attributes);
-                assertThat(ProtobufAssert.assertThat(Event::parseFrom))
-                    .canParse(msg.getPayload())
-                    .isEqualTo(event);
-              }
-              return null;
-            });
+            forEach(
+                msg -> {
+                  assertThat(msg.getAttributeMap()).isEqualTo(attributes);
+                  assertThat(ProtobufAssert.assertThat(Event::parseFrom))
+                      .canParse(msg.getPayload())
+                      .isEqualTo(event);
+                }));
 
     pipeline.run();
   }
@@ -81,17 +79,14 @@ public class EventToPubsubMessageTest {
     attributes.put("event.type", "click");
 
     assertThat(messages)
-        // PubsubMessage, delightfully, doesn't have an equals impl
         .satisfies(
-            msgs -> {
-              for (PubsubMessage msg : msgs) {
-                assertThat(msg.getAttributeMap()).isEqualTo(attributes);
-                assertThat(ProtobufAssert.assertThat(Event::parseFrom))
-                    .canParse(msg.getPayload())
-                    .isEqualTo(event);
-              }
-              return null;
-            });
+            forEach(
+                msg -> {
+                  assertThat(msg.getAttributeMap()).isEqualTo(attributes);
+                  assertThat(ProtobufAssert.assertThat(Event::parseFrom))
+                      .canParse(msg.getPayload())
+                      .isEqualTo(event);
+                }));
 
     pipeline.run();
   }
