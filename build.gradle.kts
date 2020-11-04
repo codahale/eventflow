@@ -81,9 +81,8 @@ allprojects {
             ktfmt()
         }
 
-        // TODO figure out formtting for Kotlin scripts
         kotlinGradle {
-//            ktfmt()
+            ktlint()
         }
     }
 }
