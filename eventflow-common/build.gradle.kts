@@ -1,5 +1,6 @@
 import com.google.protobuf.gradle.protobuf
 import com.google.protobuf.gradle.protoc
+import io.eventflow.Versions
 
 plugins {
     id("java-library")
@@ -8,11 +9,11 @@ plugins {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:${Versions.protobuf}"
+        artifact = "com.google.protobuf:protoc:${Versions.PROTOBUF}"
     }
 }
 
 dependencies {
-    api("com.google.protobuf:protobuf-java:${Versions.protobuf}")
-    api("com.google.protobuf:protobuf-java-util:${Versions.protobuf}")
+    api("com.google.protobuf:protobuf-java:${Versions.PROTOBUF}")
+    api("com.google.protobuf:protobuf-java-util:${Versions.PROTOBUF}")
 }

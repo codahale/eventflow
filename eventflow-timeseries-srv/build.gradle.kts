@@ -1,3 +1,5 @@
+import io.eventflow.Versions
+
 plugins {
     id("application")
     id("com.google.cloud.tools.jib") version "2.6.0"
@@ -13,17 +15,17 @@ distZip.enabled = false
 dependencies {
     implementation(project(":eventflow-timeseries-api"))
 
-    implementation("com.google.protobuf:protobuf-java:${Versions.protobuf}")
-    implementation("com.google.protobuf:protobuf-java-util:${Versions.protobuf}")
+    implementation("com.google.protobuf:protobuf-java:${Versions.PROTOBUF}")
+    implementation("com.google.protobuf:protobuf-java-util:${Versions.PROTOBUF}")
 
-    implementation("io.grpc:grpc-netty-shaded:${Versions.grpc}")
-    implementation("io.grpc:grpc-protobuf:${Versions.grpc}")
-    implementation("io.grpc:grpc-stub:${Versions.grpc}")
+    implementation("io.grpc:grpc-netty-shaded:${Versions.GRPC}")
+    implementation("io.grpc:grpc-protobuf:${Versions.GRPC}")
+    implementation("io.grpc:grpc-stub:${Versions.GRPC}")
 
     implementation("com.google.cloud:google-cloud-spanner:3.0.1")
     implementation("redis.clients:jedis:3.3.0")
 
-    testImplementation("io.grpc:grpc-testing:${Versions.grpc}")
+    testImplementation("io.grpc:grpc-testing:${Versions.GRPC}")
 }
 
 application {

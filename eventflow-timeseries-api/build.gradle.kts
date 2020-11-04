@@ -4,6 +4,7 @@ import com.google.protobuf.gradle.ofSourceSet
 import com.google.protobuf.gradle.plugins
 import com.google.protobuf.gradle.protobuf
 import com.google.protobuf.gradle.protoc
+import io.eventflow.Versions
 
 plugins {
     id("java-library")
@@ -12,12 +13,12 @@ plugins {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:${Versions.protobuf}"
+        artifact = "com.google.protobuf:protoc:${Versions.PROTOBUF}"
     }
 
     plugins {
         id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:${Versions.grpc}"
+            artifact = "io.grpc:protoc-gen-grpc-java:${Versions.GRPC}"
         }
     }
 
@@ -31,12 +32,12 @@ protobuf {
 }
 
 dependencies {
-    api("com.google.protobuf:protobuf-java:${Versions.protobuf}")
-    api("com.google.protobuf:protobuf-java-util:${Versions.protobuf}")
-    api("io.grpc:grpc-protobuf:${Versions.grpc}")
-    api("io.grpc:grpc-stub:${Versions.grpc}")
+    api("com.google.protobuf:protobuf-java:${Versions.PROTOBUF}")
+    api("com.google.protobuf:protobuf-java-util:${Versions.PROTOBUF}")
+    api("io.grpc:grpc-protobuf:${Versions.GRPC}")
+    api("io.grpc:grpc-stub:${Versions.GRPC}")
 
     compileOnly("javax.annotation:javax.annotation-api:1.3.1")
 
-    testImplementation("io.grpc:grpc-testing:${Versions.grpc}")
+    testImplementation("io.grpc:grpc-testing:${Versions.GRPC}")
 }
