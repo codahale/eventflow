@@ -38,20 +38,7 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
   @Override
   public void get(GetRequest request, StreamObserver<GetResponse> responseObserver) {
     var statement =
-        Statement.newBuilder("WITH intervals AS (")
-            .append("SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts, ")
-            .append(intervalAggFunc(request.getName()))
-            .append(" AS value")
-            .append(" FROM intervals_minutes")
-            .append(" WHERE name = @name")
-            .append(" AND interval_ts BETWEEN @start AND @end")
-            .append(" GROUP BY 1")
-            .append(")")
-            .append(" SELECT TIMESTAMP_TRUNC(interval_ts, ")
-            .append(granPart(request.getGranularity()))
-            .append(", @tz), ")
-            .append(aggFunc(request.getAggregation()))
-            .append(" FROM intervals GROUP BY 1 ORDER BY 1")
+        query(request)
             .bind("name")
             .to(request.getName())
             .bind("tz")
@@ -72,6 +59,43 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
       responseObserver.onNext(resp.build());
       responseObserver.onCompleted();
     }
+  }
+
+  private Statement.Builder query(GetRequest request) {
+    var intervalAggFunc = intervalAggFunc(request.getName());
+    var aggFunc = aggFunc(request.getAggregation());
+
+    // If the interval aggregation function is the same as the query aggregation function, we can
+    // aggregate the interval values directly, because the aggregation functions are commutative:
+    // the sum of sums of values is the sum of the values, etc.
+    if (intervalAggFunc.equals(aggFunc)) {
+      return Statement.newBuilder("SELECT TIMESTAMP_TRUNC(interval_ts, ")
+          .append(granPart(request.getGranularity()))
+          .append(", @tz), ")
+          .append(aggFunc)
+          .append(" FROM intervals_minutes")
+          .append(" WHERE name = @name")
+          .append(" AND interval_ts BETWEEN @start AND @end")
+          .append(" GROUP BY 1 ORDER BY 1");
+    }
+
+    // If the interval aggregation function and the query aggregation function are different, then
+    // we need to materialize the actual interval values in a common table expression, because the
+    // average of values isn't the same as the average of the sum of values.
+    return Statement.newBuilder("WITH intervals AS (")
+        .append("SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts, ")
+        .append(intervalAggFunc)
+        .append(" AS value")
+        .append(" FROM intervals_minutes")
+        .append(" WHERE name = @name")
+        .append(" AND interval_ts BETWEEN @start AND @end")
+        .append(" GROUP BY 1")
+        .append(")")
+        .append(" SELECT TIMESTAMP_TRUNC(interval_ts, ")
+        .append(granPart(request.getGranularity()))
+        .append(", @tz), ")
+        .append(aggFunc)
+        .append(" FROM intervals GROUP BY 1 ORDER BY 1");
   }
 
   // Detect the interval aggregation function based on the metric name.

@@ -108,7 +108,7 @@ public class TimeseriesImplTest {
         .verify(tx)
         .executeQuery(
             Statement.newBuilder(
-                    "WITH intervals AS (SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts, SUM(value) AS value FROM intervals_minutes WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1) SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz), SUM(value) FROM intervals GROUP BY 1 ORDER BY 1")
+                    "SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz), SUM(value) FROM intervals_minutes WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1 ORDER BY 1")
                 .bind("name")
                 .to("example")
                 .bind("tz")
@@ -193,17 +193,17 @@ public class TimeseriesImplTest {
                     Type.StructField.of("n1", Type.float64())),
                 List.of(
                     Struct.newBuilder()
-                          .set("n0")
-                          .to(Timestamp.parseTimestamp("2020-10-30T00:00:00Z"))
-                          .set("n1")
-                          .to(123.4d)
-                          .build(),
+                        .set("n0")
+                        .to(Timestamp.parseTimestamp("2020-10-30T00:00:00Z"))
+                        .set("n1")
+                        .to(123.4d)
+                        .build(),
                     Struct.newBuilder()
-                          .set("n0")
-                          .to(Timestamp.parseTimestamp("2020-10-30T00:01:00"))
-                          .set("n1")
-                          .to(56.789d)
-                          .build())));
+                        .set("n0")
+                        .to(Timestamp.parseTimestamp("2020-10-30T00:01:00"))
+                        .set("n1")
+                        .to(56.789d)
+                        .build())));
 
     when(tx.executeQuery(any())).thenReturn(rs);
     when(tx.getReadTimestamp()).thenReturn(Timestamp.ofTimeSecondsAndNanos(12345678, 0));
@@ -231,16 +231,16 @@ public class TimeseriesImplTest {
         .verify(tx)
         .executeQuery(
             Statement.newBuilder(
-                "WITH intervals AS (SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts, MIN(value) AS value FROM intervals_minutes WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1) SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz), MAX(value) FROM intervals GROUP BY 1 ORDER BY 1")
-                     .bind("name")
-                     .to("example.min")
-                     .bind("tz")
-                     .to("America/Denver")
-                     .bind("start")
-                     .to(Timestamp.parseTimestamp("2020-10-29T00:00:00Z"))
-                     .bind("end")
-                     .to(Timestamp.parseTimestamp("2020-10-31T00:00:00Z"))
-                     .build());
+                    "WITH intervals AS (SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts, MIN(value) AS value FROM intervals_minutes WHERE name = @name AND interval_ts BETWEEN @start AND @end GROUP BY 1) SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz), MAX(value) FROM intervals GROUP BY 1 ORDER BY 1")
+                .bind("name")
+                .to("example.min")
+                .bind("tz")
+                .to("America/Denver")
+                .bind("start")
+                .to(Timestamp.parseTimestamp("2020-10-29T00:00:00Z"))
+                .bind("end")
+                .to(Timestamp.parseTimestamp("2020-10-31T00:00:00Z"))
+                .build());
     inOrder.verify(rs).close();
     inOrder.verify(tx).close();
   }
