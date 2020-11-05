@@ -15,7 +15,6 @@
  */
 package io.eventflow.timeseries.rollups;
 
-import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
 import static io.eventflow.testing.beam.PCollectionAssert.givenAll;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,6 +27,7 @@ import io.eventflow.common.pb.Event;
 import java.security.SecureRandom;
 import java.text.ParseException;
 import java.time.Duration;
+import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.WithTimestamps;
@@ -79,7 +79,7 @@ public class EventAggregatorTest {
             .apply(WithTimestamps.of(input -> Instant.ofEpochSecond(2234)))
             .apply(eventAggregator);
 
-    assertThat(results)
+    PAssert.that(results)
         .satisfies(
             givenAll(
                 inserts ->

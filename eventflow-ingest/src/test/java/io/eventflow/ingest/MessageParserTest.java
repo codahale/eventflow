@@ -15,7 +15,6 @@
  */
 package io.eventflow.ingest;
 
-import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
 import static io.eventflow.testing.beam.PCollectionAssert.givenAll;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,6 +34,7 @@ import java.time.ZoneOffset;
 import org.apache.beam.sdk.extensions.protobuf.ProtoCoder;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesAndMessageIdCoder;
+import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.ParDo;
@@ -68,8 +68,8 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    assertThat(results.get(MessageParser.VALID)).empty();
-    assertThat(results.get(MessageParser.INVALID))
+    PAssert.that(results.get(MessageParser.VALID)).empty();
+    PAssert.that(results.get(MessageParser.INVALID))
         .satisfies(
             givenAll(
                 msgs ->
@@ -96,8 +96,8 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    assertThat(results.get(MessageParser.VALID)).empty();
-    assertThat(results.get(MessageParser.INVALID))
+    PAssert.that(results.get(MessageParser.VALID)).empty();
+    PAssert.that(results.get(MessageParser.INVALID))
         .satisfies(
             givenAll(
                 msgs ->
@@ -125,8 +125,8 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    assertThat(results.get(MessageParser.VALID)).empty();
-    assertThat(results.get(MessageParser.INVALID))
+    PAssert.that(results.get(MessageParser.VALID)).empty();
+    PAssert.that(results.get(MessageParser.INVALID))
         .satisfies(
             givenAll(
                 msgs ->
@@ -155,8 +155,8 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    assertThat(results.get(MessageParser.VALID)).empty();
-    assertThat(results.get(MessageParser.INVALID))
+    PAssert.that(results.get(MessageParser.VALID)).empty();
+    PAssert.that(results.get(MessageParser.INVALID))
         .satisfies(
             givenAll(
                 msgs ->
@@ -186,8 +186,8 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    assertThat(results.get(MessageParser.VALID)).empty();
-    assertThat(results.get(MessageParser.INVALID))
+    PAssert.that(results.get(MessageParser.VALID)).empty();
+    PAssert.that(results.get(MessageParser.INVALID))
         .satisfies(
             givenAll(
                 msgs ->
@@ -217,8 +217,8 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    assertThat(results.get(MessageParser.VALID)).empty();
-    assertThat(results.get(MessageParser.INVALID))
+    PAssert.that(results.get(MessageParser.VALID)).empty();
+    PAssert.that(results.get(MessageParser.INVALID))
         .satisfies(
             givenAll(
                 msgs ->
@@ -254,8 +254,8 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    assertThat(results.get(MessageParser.VALID)).empty();
-    assertThat(results.get(MessageParser.INVALID))
+    PAssert.that(results.get(MessageParser.VALID)).empty();
+    PAssert.that(results.get(MessageParser.INVALID))
         .satisfies(
             givenAll(
                 msgs ->
@@ -291,8 +291,8 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    assertThat(results.get(MessageParser.VALID)).empty();
-    assertThat(results.get(MessageParser.INVALID))
+    PAssert.that(results.get(MessageParser.VALID)).empty();
+    PAssert.that(results.get(MessageParser.INVALID))
         .satisfies(
             givenAll(
                 msgs ->
@@ -329,8 +329,8 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    assertThat(results.get(MessageParser.VALID)).empty();
-    assertThat(results.get(MessageParser.INVALID))
+    PAssert.that(results.get(MessageParser.VALID)).empty();
+    PAssert.that(results.get(MessageParser.INVALID))
         .satisfies(
             givenAll(
                 msgs ->
@@ -367,8 +367,8 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    assertThat(results.get(MessageParser.VALID)).empty();
-    assertThat(results.get(MessageParser.INVALID))
+    PAssert.that(results.get(MessageParser.VALID)).empty();
+    PAssert.that(results.get(MessageParser.INVALID))
         .satisfies(
             givenAll(
                 msgs ->
@@ -409,8 +409,8 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    assertThat(results.get(MessageParser.VALID)).empty();
-    assertThat(results.get(MessageParser.INVALID))
+    PAssert.that(results.get(MessageParser.VALID)).empty();
+    PAssert.that(results.get(MessageParser.INVALID))
         .satisfies(
             givenAll(
                 msgs ->
@@ -447,9 +447,9 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    assertThat(results.get(MessageParser.VALID))
+    PAssert.that(results.get(MessageParser.VALID))
         .satisfies(givenAll(msgs -> assertThat(msgs).containsExactly(event)));
-    assertThat(results.get(MessageParser.INVALID)).empty();
+    PAssert.that(results.get(MessageParser.INVALID)).empty();
 
     pipeline.run();
   }
@@ -476,9 +476,9 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    assertThat(results.get(MessageParser.VALID))
+    PAssert.that(results.get(MessageParser.VALID))
         .satisfies(givenAll(msgs -> assertThat(msgs).containsExactly(event)));
-    assertThat(results.get(MessageParser.INVALID)).empty();
+    PAssert.that(results.get(MessageParser.INVALID)).empty();
 
     pipeline.run();
   }

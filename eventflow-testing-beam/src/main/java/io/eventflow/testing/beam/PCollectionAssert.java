@@ -16,34 +16,20 @@
 package io.eventflow.testing.beam;
 
 import java.io.Serializable;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.transforms.SerializableFunction;
-import org.apache.beam.sdk.values.PCollection;
 
 public class PCollectionAssert {
-
-  private PCollectionAssert() {
-    // singleton
-  }
-
-  public static <T> PAssert.IterableAssert<T> assertThat(PCollection<T> actual) {
-    return PAssert.that(actual);
-  }
+  private PCollectionAssert() {}
 
   public static <T> SerializableFunction<Iterable<T>, Void> givenAll(
-      SerializableConsumer<Set<T>> f) {
+      SerializableConsumer<Iterable<T>> f) {
     return new SerializableFunction<>() {
       private static final long serialVersionUID = -2910645777299451294L;
 
       @Override
       public Void apply(Iterable<T> input) {
         try {
-          f.accept(
-              StreamSupport.stream(input.spliterator(), false)
-                  .collect(Collectors.toUnmodifiableSet()));
+          f.accept(input);
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
