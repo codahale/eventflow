@@ -16,7 +16,9 @@
 package io.eventflow.testing.beam;
 
 import java.io.Serializable;
-import java.util.function.Consumer;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.values.PCollection;
@@ -31,19 +33,26 @@ public class PCollectionAssert {
     return PAssert.that(actual);
   }
 
-  public static <T> SerializableFunction<Iterable<T>, Void> forEach(SerializableConsumer<T> f) {
+  public static <T> SerializableFunction<Iterable<T>, Void> givenAll(
+      SerializableConsumer<Set<T>> f) {
     return new SerializableFunction<>() {
       private static final long serialVersionUID = -2910645777299451294L;
 
       @Override
       public Void apply(Iterable<T> input) {
-        for (T t : input) {
-          f.accept(t);
+        try {
+          f.accept(
+              StreamSupport.stream(input.spliterator(), false)
+                  .collect(Collectors.toUnmodifiableSet()));
+        } catch (Exception e) {
+          throw new RuntimeException(e);
         }
         return null;
       }
     };
   }
 
-  public interface SerializableConsumer<T> extends Consumer<T>, Serializable {}
+  public interface SerializableConsumer<T> extends Serializable {
+    void accept(T t) throws Exception;
+  }
 }

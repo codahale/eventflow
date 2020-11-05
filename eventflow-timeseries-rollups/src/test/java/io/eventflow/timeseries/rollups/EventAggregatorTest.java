@@ -16,7 +16,12 @@
 package io.eventflow.timeseries.rollups;
 
 import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
+import static io.eventflow.testing.beam.PCollectionAssert.givenAll;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.cloud.Timestamp;
+import com.google.cloud.spanner.Mutation;
+import com.google.cloud.spanner.Value;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.AttributeValues;
 import io.eventflow.common.pb.Event;
@@ -25,7 +30,6 @@ import java.text.ParseException;
 import java.time.Duration;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
-import org.apache.beam.sdk.transforms.ToString;
 import org.apache.beam.sdk.transforms.WithTimestamps;
 import org.joda.time.Instant;
 import org.junit.Rule;
@@ -73,18 +77,86 @@ public class EventAggregatorTest {
                             "duration", AttributeValues.durationValue(Duration.ofMinutes(22)))
                         .build()))
             .apply(WithTimestamps.of(input -> Instant.ofEpochSecond(2234)))
-            .apply(eventAggregator)
-            .apply(ToString.elements());
+            .apply(eventAggregator);
 
     assertThat(results)
-        .containsInAnyOrder(
-            "insert(intervals_minutes{name=three.duration.sum,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=1.32E9,insert_ts=spanner.commit_timestamp()})",
-            "insert(intervals_minutes{name=two.int.max,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=200.0,insert_ts=spanner.commit_timestamp()})",
-            "insert(intervals_minutes{name=two.float.min,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=300.0,insert_ts=spanner.commit_timestamp()})",
-            "insert(intervals_minutes{name=three.count,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=1.0,insert_ts=spanner.commit_timestamp()})",
-            "insert(intervals_minutes{name=one.count,interval_ts=2020-11-01T12:23:00Z,insert_id=12345,value=2.0,insert_ts=spanner.commit_timestamp()})",
-            "insert(intervals_minutes{name=two.count,interval_ts=2020-11-01T12:24:00Z,insert_id=12345,value=2.0,insert_ts=spanner.commit_timestamp()})");
-
+        .satisfies(
+            givenAll(
+                inserts ->
+                    assertThat(inserts)
+                        .containsExactlyInAnyOrder(
+                            Mutation.newInsertBuilder("intervals_minutes")
+                                .set("name")
+                                .to("one.count")
+                                .set("interval_ts")
+                                .to(Timestamp.parseTimestamp("2020-11-01T12:23:00Z"))
+                                .set("insert_id")
+                                .to(12345L)
+                                .set("value")
+                                .to(2.0)
+                                .set("insert_ts")
+                                .to(Value.COMMIT_TIMESTAMP)
+                                .build(),
+                            Mutation.newInsertBuilder("intervals_minutes")
+                                .set("name")
+                                .to("two.count")
+                                .set("interval_ts")
+                                .to(Timestamp.parseTimestamp("2020-11-01T12:24:00Z"))
+                                .set("insert_id")
+                                .to(12345L)
+                                .set("value")
+                                .to(2.0)
+                                .set("insert_ts")
+                                .to(Value.COMMIT_TIMESTAMP)
+                                .build(),
+                            Mutation.newInsertBuilder("intervals_minutes")
+                                .set("name")
+                                .to("two.float.min")
+                                .set("interval_ts")
+                                .to(Timestamp.parseTimestamp("2020-11-01T12:24:00Z"))
+                                .set("insert_id")
+                                .to(12345L)
+                                .set("value")
+                                .to(300.0)
+                                .set("insert_ts")
+                                .to(Value.COMMIT_TIMESTAMP)
+                                .build(),
+                            Mutation.newInsertBuilder("intervals_minutes")
+                                .set("name")
+                                .to("two.int.max")
+                                .set("interval_ts")
+                                .to(Timestamp.parseTimestamp("2020-11-01T12:24:00Z"))
+                                .set("insert_id")
+                                .to(12345L)
+                                .set("value")
+                                .to(200.0)
+                                .set("insert_ts")
+                                .to(Value.COMMIT_TIMESTAMP)
+                                .build(),
+                            Mutation.newInsertBuilder("intervals_minutes")
+                                .set("name")
+                                .to("three.count")
+                                .set("interval_ts")
+                                .to(Timestamp.parseTimestamp("2020-11-01T12:24:00Z"))
+                                .set("insert_id")
+                                .to(12345L)
+                                .set("value")
+                                .to(1.0)
+                                .set("insert_ts")
+                                .to(Value.COMMIT_TIMESTAMP)
+                                .build(),
+                            Mutation.newInsertBuilder("intervals_minutes")
+                                .set("name")
+                                .to("three.duration.sum")
+                                .set("interval_ts")
+                                .to(Timestamp.parseTimestamp("2020-11-01T12:24:00Z"))
+                                .set("insert_id")
+                                .to(12345L)
+                                .set("value")
+                                .to(1.32e9)
+                                .set("insert_ts")
+                                .to(Value.COMMIT_TIMESTAMP)
+                                .build())));
     pipeline.run();
   }
 
