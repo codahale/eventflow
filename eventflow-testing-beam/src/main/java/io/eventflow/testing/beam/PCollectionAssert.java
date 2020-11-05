@@ -16,29 +16,61 @@
 package io.eventflow.testing.beam;
 
 import java.io.Serializable;
+import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.transforms.SerializableFunction;
+import org.apache.beam.sdk.values.PCollection;
 
-public class PCollectionAssert {
-  private PCollectionAssert() {}
+public class PCollectionAssert<T> {
+  private final PCollection<T> actual;
 
-  public static <T> SerializableFunction<Iterable<T>, Void> givenAll(
-      SerializableConsumer<Iterable<T>> f) {
-    return new SerializableFunction<>() {
-      private static final long serialVersionUID = -2910645777299451294L;
+  private PCollectionAssert(PCollection<T> actual) {
+    this.actual = actual;
+  }
 
-      @Override
-      public Void apply(Iterable<T> input) {
-        try {
-          f.accept(input);
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-        return null;
-      }
-    };
+  public static <T> PCollectionAssert<T> assertThat(PCollection<T> actual) {
+    return new PCollectionAssert<>(actual);
+  }
+
+  public void isEmpty() {
+    PAssert.that(actual).empty();
+  }
+
+  @SafeVarargs
+  public final void containsExactlyInAnyOrder(T... elements) {
+    PAssert.that(actual).containsInAnyOrder(elements);
+  }
+
+  public void containsExactlyInAnyOrder(Iterable<T> elements) {
+    PAssert.that(actual).containsInAnyOrder(elements);
+  }
+
+  public void allSatisfy(SerializableConsumer<T> consumer) {
+    PAssert.that(actual).satisfies(new SerConFunc<>(consumer));
   }
 
   public interface SerializableConsumer<T> extends Serializable {
     void accept(T t) throws Exception;
+  }
+
+  private static class SerConFunc<T> implements SerializableFunction<Iterable<T>, Void> {
+    private static final long serialVersionUID = -3724259793467901505L;
+
+    private final SerializableConsumer<T> consumer;
+
+    SerConFunc(SerializableConsumer<T> consumer) {
+      this.consumer = consumer;
+    }
+
+    @Override
+    public Void apply(Iterable<T> input) {
+      for (T t : input) {
+        try {
+          consumer.accept(t);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+      return null;
+    }
   }
 }

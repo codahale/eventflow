@@ -15,7 +15,7 @@
  */
 package io.eventflow.ingest;
 
-import static io.eventflow.testing.beam.PCollectionAssert.givenAll;
+import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.protobuf.StringValue;
@@ -25,7 +25,6 @@ import io.eventflow.testing.ProtobufAssert;
 import java.util.HashMap;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesAndMessageIdCoder;
-import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.ParDo;
@@ -63,19 +62,14 @@ public class EventToPubsubMessageTest {
     attributes.put("event.timestamp", "1970-01-01T00:03:20Z");
     attributes.put("event.type", "click");
 
-    PAssert.that(messages)
-        .satisfies(
-            givenAll(
-                msgs ->
-                    assertThat(msgs)
-                        .hasSize(1)
-                        .allSatisfy(
-                            msg -> {
-                              assertThat(msg.getAttributeMap()).isEqualTo(attributes);
-                              assertThat(ProtobufAssert.assertThat(Event::parseFrom))
-                                  .canParse(msg.getPayload())
-                                  .isEqualTo(event);
-                            })));
+    assertThat(messages)
+        .allSatisfy(
+            msg -> {
+              assertThat(msg.getAttributeMap()).isEqualTo(attributes);
+              assertThat(ProtobufAssert.assertThat(Event::parseFrom))
+                  .canParse(msg.getPayload())
+                  .isEqualTo(event);
+            });
 
     pipeline.run();
   }
@@ -97,19 +91,14 @@ public class EventToPubsubMessageTest {
     attributes.put("event.timestamp", "1970-01-01T00:03:20Z");
     attributes.put("event.type", "click");
 
-    PAssert.that(messages)
-        .satisfies(
-            givenAll(
-                msgs ->
-                    assertThat(msgs)
-                        .hasSize(1)
-                        .allSatisfy(
-                            msg -> {
-                              assertThat(msg.getAttributeMap()).isEqualTo(attributes);
-                              assertThat(ProtobufAssert.assertThat(Event::parseFrom))
-                                  .canParse(msg.getPayload())
-                                  .isEqualTo(event);
-                            })));
+    assertThat(messages)
+        .allSatisfy(
+            msg -> {
+              assertThat(msg.getAttributeMap()).isEqualTo(attributes);
+              assertThat(ProtobufAssert.assertThat(Event::parseFrom))
+                  .canParse(msg.getPayload())
+                  .isEqualTo(event);
+            });
 
     pipeline.run();
   }

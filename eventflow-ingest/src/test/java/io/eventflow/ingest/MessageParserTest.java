@@ -15,8 +15,7 @@
  */
 package io.eventflow.ingest;
 
-import static io.eventflow.testing.beam.PCollectionAssert.givenAll;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
@@ -34,7 +33,6 @@ import java.time.ZoneOffset;
 import org.apache.beam.sdk.extensions.protobuf.ProtoCoder;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesAndMessageIdCoder;
-import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.ParDo;
@@ -68,19 +66,15 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    PAssert.that(results.get(MessageParser.VALID)).empty();
-    PAssert.that(results.get(MessageParser.INVALID))
-        .satisfies(
-            givenAll(
-                msgs ->
-                    assertThat(msgs)
-                        .containsExactlyInAnyOrder(
-                            InvalidMessage.newBuilder()
-                                .setMessageId("12345")
-                                .setMessageData(ByteString.copyFromUtf8("weird"))
-                                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
-                                .setError("invalid protobuf")
-                                .build())));
+    assertThat(results.get(MessageParser.VALID)).isEmpty();
+    assertThat(results.get(MessageParser.INVALID))
+        .containsExactlyInAnyOrder(
+            InvalidMessage.newBuilder()
+                .setMessageId("12345")
+                .setMessageData(ByteString.copyFromUtf8("weird"))
+                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
+                .setError("invalid protobuf")
+                .build());
 
     pipeline.run();
   }
@@ -96,20 +90,16 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    PAssert.that(results.get(MessageParser.VALID)).empty();
-    PAssert.that(results.get(MessageParser.INVALID))
-        .satisfies(
-            givenAll(
-                msgs ->
-                    assertThat(msgs)
-                        .containsExactlyInAnyOrder(
-                            InvalidMessage.newBuilder()
-                                .setMessageId("12345")
-                                .setMessageData(event.toByteString())
-                                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
-                                .setError("blank event id")
-                                .setEvent(event)
-                                .build())));
+    assertThat(results.get(MessageParser.VALID)).isEmpty();
+    assertThat(results.get(MessageParser.INVALID))
+        .containsExactlyInAnyOrder(
+            InvalidMessage.newBuilder()
+                .setMessageId("12345")
+                .setMessageData(event.toByteString())
+                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
+                .setError("blank event id")
+                .setEvent(event)
+                .build());
 
     pipeline.run();
   }
@@ -125,20 +115,16 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    PAssert.that(results.get(MessageParser.VALID)).empty();
-    PAssert.that(results.get(MessageParser.INVALID))
-        .satisfies(
-            givenAll(
-                msgs ->
-                    assertThat(msgs)
-                        .containsExactlyInAnyOrder(
-                            InvalidMessage.newBuilder()
-                                .setMessageId("12345")
-                                .setMessageData(event.toByteString())
-                                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
-                                .setError("event id/attribute mismatch")
-                                .setEvent(event)
-                                .build())));
+    assertThat(results.get(MessageParser.VALID)).isEmpty();
+    assertThat(results.get(MessageParser.INVALID))
+        .containsExactlyInAnyOrder(
+            InvalidMessage.newBuilder()
+                .setMessageId("12345")
+                .setMessageData(event.toByteString())
+                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
+                .setError("event id/attribute mismatch")
+                .setEvent(event)
+                .build());
 
     pipeline.run();
   }
@@ -155,21 +141,17 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    PAssert.that(results.get(MessageParser.VALID)).empty();
-    PAssert.that(results.get(MessageParser.INVALID))
-        .satisfies(
-            givenAll(
-                msgs ->
-                    assertThat(msgs)
-                        .containsExactlyInAnyOrder(
-                            InvalidMessage.newBuilder()
-                                .setMessageId("12345")
-                                .setMessageData(event.toByteString())
-                                .putMessageAttributes("event.id", "id")
-                                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
-                                .setError("blank event type")
-                                .setEvent(event)
-                                .build())));
+    assertThat(results.get(MessageParser.VALID)).isEmpty();
+    assertThat(results.get(MessageParser.INVALID))
+        .containsExactlyInAnyOrder(
+            InvalidMessage.newBuilder()
+                .setMessageId("12345")
+                .setMessageData(event.toByteString())
+                .putMessageAttributes("event.id", "id")
+                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
+                .setError("blank event type")
+                .setEvent(event)
+                .build());
 
     pipeline.run();
   }
@@ -186,21 +168,17 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    PAssert.that(results.get(MessageParser.VALID)).empty();
-    PAssert.that(results.get(MessageParser.INVALID))
-        .satisfies(
-            givenAll(
-                msgs ->
-                    assertThat(msgs)
-                        .containsExactlyInAnyOrder(
-                            InvalidMessage.newBuilder()
-                                .setMessageId("12345")
-                                .setMessageData(event.toByteString())
-                                .putMessageAttributes("event.id", "id")
-                                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
-                                .setError("blank event source")
-                                .setEvent(event)
-                                .build())));
+    assertThat(results.get(MessageParser.VALID)).isEmpty();
+    assertThat(results.get(MessageParser.INVALID))
+        .containsExactlyInAnyOrder(
+            InvalidMessage.newBuilder()
+                .setMessageId("12345")
+                .setMessageData(event.toByteString())
+                .putMessageAttributes("event.id", "id")
+                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
+                .setError("blank event source")
+                .setEvent(event)
+                .build());
 
     pipeline.run();
   }
@@ -217,21 +195,17 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    PAssert.that(results.get(MessageParser.VALID)).empty();
-    PAssert.that(results.get(MessageParser.INVALID))
-        .satisfies(
-            givenAll(
-                msgs ->
-                    assertThat(msgs)
-                        .containsExactlyInAnyOrder(
-                            InvalidMessage.newBuilder()
-                                .setMessageId("12345")
-                                .setMessageData(event.toByteString())
-                                .putMessageAttributes("event.id", "id")
-                                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
-                                .setError("invalid event timestamp")
-                                .setEvent(event)
-                                .build())));
+    assertThat(results.get(MessageParser.VALID)).isEmpty();
+    assertThat(results.get(MessageParser.INVALID))
+        .containsExactlyInAnyOrder(
+            InvalidMessage.newBuilder()
+                .setMessageId("12345")
+                .setMessageData(event.toByteString())
+                .putMessageAttributes("event.id", "id")
+                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
+                .setError("invalid event timestamp")
+                .setEvent(event)
+                .build());
 
     pipeline.run();
   }
@@ -254,21 +228,17 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    PAssert.that(results.get(MessageParser.VALID)).empty();
-    PAssert.that(results.get(MessageParser.INVALID))
-        .satisfies(
-            givenAll(
-                msgs ->
-                    assertThat(msgs)
-                        .containsExactlyInAnyOrder(
-                            InvalidMessage.newBuilder()
-                                .setMessageId("12345")
-                                .setMessageData(event.toByteString())
-                                .putMessageAttributes("event.id", "id")
-                                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
-                                .setError("invalid event timestamp")
-                                .setEvent(event)
-                                .build())));
+    assertThat(results.get(MessageParser.VALID)).isEmpty();
+    assertThat(results.get(MessageParser.INVALID))
+        .containsExactlyInAnyOrder(
+            InvalidMessage.newBuilder()
+                .setMessageId("12345")
+                .setMessageData(event.toByteString())
+                .putMessageAttributes("event.id", "id")
+                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
+                .setError("invalid event timestamp")
+                .setEvent(event)
+                .build());
 
     pipeline.run();
   }
@@ -291,21 +261,17 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    PAssert.that(results.get(MessageParser.VALID)).empty();
-    PAssert.that(results.get(MessageParser.INVALID))
-        .satisfies(
-            givenAll(
-                msgs ->
-                    assertThat(msgs)
-                        .containsExactlyInAnyOrder(
-                            InvalidMessage.newBuilder()
-                                .setMessageId("12345")
-                                .setMessageData(event.toByteString())
-                                .putMessageAttributes("event.id", "id")
-                                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
-                                .setError("no event attributes")
-                                .setEvent(event)
-                                .build())));
+    assertThat(results.get(MessageParser.VALID)).isEmpty();
+    assertThat(results.get(MessageParser.INVALID))
+        .containsExactlyInAnyOrder(
+            InvalidMessage.newBuilder()
+                .setMessageId("12345")
+                .setMessageData(event.toByteString())
+                .putMessageAttributes("event.id", "id")
+                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
+                .setError("no event attributes")
+                .setEvent(event)
+                .build());
 
     pipeline.run();
   }
@@ -329,21 +295,17 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    PAssert.that(results.get(MessageParser.VALID)).empty();
-    PAssert.that(results.get(MessageParser.INVALID))
-        .satisfies(
-            givenAll(
-                msgs ->
-                    assertThat(msgs)
-                        .containsExactlyInAnyOrder(
-                            InvalidMessage.newBuilder()
-                                .setMessageId("12345")
-                                .setMessageData(event.toByteString())
-                                .putMessageAttributes("event.id", "id")
-                                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
-                                .setError("blank attribute key")
-                                .setEvent(event)
-                                .build())));
+    assertThat(results.get(MessageParser.VALID)).isEmpty();
+    assertThat(results.get(MessageParser.INVALID))
+        .containsExactlyInAnyOrder(
+            InvalidMessage.newBuilder()
+                .setMessageId("12345")
+                .setMessageData(event.toByteString())
+                .putMessageAttributes("event.id", "id")
+                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
+                .setError("blank attribute key")
+                .setEvent(event)
+                .build());
 
     pipeline.run();
   }
@@ -367,21 +329,17 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    PAssert.that(results.get(MessageParser.VALID)).empty();
-    PAssert.that(results.get(MessageParser.INVALID))
-        .satisfies(
-            givenAll(
-                msgs ->
-                    assertThat(msgs)
-                        .containsExactlyInAnyOrder(
-                            InvalidMessage.newBuilder()
-                                .setMessageId("12345")
-                                .setMessageData(event.toByteString())
-                                .putMessageAttributes("event.id", "id")
-                                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
-                                .setError("blank value for attribute blank")
-                                .setEvent(event)
-                                .build())));
+    assertThat(results.get(MessageParser.VALID)).isEmpty();
+    assertThat(results.get(MessageParser.INVALID))
+        .containsExactlyInAnyOrder(
+            InvalidMessage.newBuilder()
+                .setMessageId("12345")
+                .setMessageData(event.toByteString())
+                .putMessageAttributes("event.id", "id")
+                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
+                .setError("blank value for attribute blank")
+                .setEvent(event)
+                .build());
 
     pipeline.run();
   }
@@ -409,21 +367,17 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    PAssert.that(results.get(MessageParser.VALID)).empty();
-    PAssert.that(results.get(MessageParser.INVALID))
-        .satisfies(
-            givenAll(
-                msgs ->
-                    assertThat(msgs)
-                        .containsExactlyInAnyOrder(
-                            InvalidMessage.newBuilder()
-                                .setMessageId("12345")
-                                .setMessageData(event.toByteString())
-                                .putMessageAttributes("event.id", "id")
-                                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
-                                .setError("invalid timestamp value for attribute ts")
-                                .setEvent(event)
-                                .build())));
+    assertThat(results.get(MessageParser.VALID)).isEmpty();
+    assertThat(results.get(MessageParser.INVALID))
+        .containsExactlyInAnyOrder(
+            InvalidMessage.newBuilder()
+                .setMessageId("12345")
+                .setMessageData(event.toByteString())
+                .putMessageAttributes("event.id", "id")
+                .setReceivedAt(Timestamp.newBuilder().setSeconds(12345678))
+                .setError("invalid timestamp value for attribute ts")
+                .setEvent(event)
+                .build());
 
     pipeline.run();
   }
@@ -447,9 +401,8 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    PAssert.that(results.get(MessageParser.VALID))
-        .satisfies(givenAll(msgs -> assertThat(msgs).containsExactly(event)));
-    PAssert.that(results.get(MessageParser.INVALID)).empty();
+    assertThat(results.get(MessageParser.VALID)).containsExactlyInAnyOrder(event);
+    assertThat(results.get(MessageParser.INVALID)).isEmpty();
 
     pipeline.run();
   }
@@ -476,9 +429,8 @@ public class MessageParserTest {
                 ParDo.of(new MessageParser(Clock.fixed(instant, ZoneOffset.UTC)))
                     .withOutputTags(MessageParser.VALID, TupleTagList.of(MessageParser.INVALID)));
 
-    PAssert.that(results.get(MessageParser.VALID))
-        .satisfies(givenAll(msgs -> assertThat(msgs).containsExactly(event)));
-    PAssert.that(results.get(MessageParser.INVALID)).empty();
+    assertThat(results.get(MessageParser.VALID)).containsExactlyInAnyOrder(event);
+    assertThat(results.get(MessageParser.INVALID)).isEmpty();
 
     pipeline.run();
   }
