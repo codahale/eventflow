@@ -37,7 +37,7 @@ dependencies {
     api("io.grpc:grpc-protobuf:${Versions.GRPC}")
     api("io.grpc:grpc-stub:${Versions.GRPC}")
 
-    compileOnly("javax.annotation:javax.annotation-api:1.3.1")
+    compileOnly("javax.annotation:javax.annotation-api:1.3.2")
 
     testImplementation("io.grpc:grpc-testing:${Versions.GRPC}")
 }
