@@ -114,7 +114,7 @@ public class TimeseriesServiceImplTest {
 
     when(tx.executeQuery(any())).thenReturn(rs);
     when(tx.getReadTimestamp()).thenReturn(Timestamp.ofTimeSecondsAndNanos(12345678, 0));
-    when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES)))
+    when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofExactStaleness(1, TimeUnit.MINUTES)))
         .thenReturn(tx);
 
     var res =
@@ -238,7 +238,7 @@ public class TimeseriesServiceImplTest {
 
     when(tx.executeQuery(any())).thenReturn(rs);
     when(tx.getReadTimestamp()).thenReturn(Timestamp.ofTimeSecondsAndNanos(12345678, 0));
-    when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES)))
+    when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofExactStaleness(1, TimeUnit.MINUTES)))
         .thenReturn(tx);
 
     var timeZone = ZoneId.of("America/Denver");
@@ -304,7 +304,7 @@ public class TimeseriesServiceImplTest {
                         .build())));
     when(tx.executeQuery(any())).thenReturn(rs);
     when(tx.getReadTimestamp()).thenReturn(Timestamp.ofTimeSecondsAndNanos(12345678, 0));
-    when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES)))
+    when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofExactStaleness(1, TimeUnit.MINUTES)))
         .thenReturn(tx);
 
     var timeZone = ZoneId.of("America/Denver");
@@ -369,7 +369,7 @@ public class TimeseriesServiceImplTest {
 
     when(tx.executeQuery(any())).thenReturn(rs);
     when(tx.getReadTimestamp()).thenReturn(Timestamp.ofTimeSecondsAndNanos(12345678, 0));
-    when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES)))
+    when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofExactStaleness(1, TimeUnit.MINUTES)))
         .thenReturn(tx);
 
     var timeZone = ZoneId.of("America/Denver");

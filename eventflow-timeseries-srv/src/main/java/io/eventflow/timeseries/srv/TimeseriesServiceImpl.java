@@ -36,8 +36,6 @@ import java.util.concurrent.TimeUnit;
 
 public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServiceImplBase {
   private static final Tracer tracer = Tracing.getTracer();
-  private static final TimestampBound MAX_STALENESS =
-      TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES);
 
   private final DatabaseClient spanner;
   private final RedisCache cache;
@@ -71,8 +69,7 @@ public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServi
       }
     }
 
-    TRACER.getCurrentSpan().putAttribute("cache_hit", booleanAttributeValue(false));
-
+    // Generate the Spanner query to pull timestamps and values for the time series.
     var statement =
         query(request)
             .bind("name")
@@ -85,21 +82,31 @@ public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServi
             .to(Timestamp.fromProto(request.getEnd()))
             .build();
 
-    try (var tx = spanner.singleUseReadOnlyTransaction(MAX_STALENESS);
+    // Use a single-use, read-only transaction with an exact staleness bound. This allows results to
+    // be served from replicas without having to negotiate between them, which reduces latency and
+    // contention at the end of the time series.
+    try (var tx =
+            spanner.singleUseReadOnlyTransaction(
+                TimestampBound.ofExactStaleness(1, TimeUnit.MINUTES));
         var results = tx.executeQuery(statement)) {
+
+      // Convert the query results to a list of interval values.
       var builder = IntervalValues.newBuilder();
       while (results.next()) {
         builder.addTimestamps(results.getTimestamp(0).getSeconds());
         builder.addValues(results.getDouble(1));
       }
+      // Include the read timestamp from Spanner.
       builder.setReadTimestamp(tx.getReadTimestamp().toProto());
-      var resp = builder.build();
-      responseObserver.onNext(resp);
+      var values = builder.build();
+
+      // Return the response.
+      responseObserver.onNext(values);
       responseObserver.onCompleted();
 
       // If the request was cacheable, but wasn't in the cache, put it in the cache.
       if (cacheable) {
-        cache.put(key, resp);
+        cache.put(key, values);
       }
     }
   }
