@@ -19,12 +19,15 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.Statement;
 import com.google.cloud.spanner.TimestampBound;
+import com.google.protobuf.util.Timestamps;
 import io.eventflow.timeseries.api.AggregateFunction;
 import io.eventflow.timeseries.api.GetIntervalValuesRequest;
 import io.eventflow.timeseries.api.Granularity;
 import io.eventflow.timeseries.api.IntervalValues;
 import io.eventflow.timeseries.api.TimeseriesServiceGrpc;
 import io.grpc.stub.StreamObserver;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServiceImplBase {
@@ -32,14 +35,37 @@ public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServi
       TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES);
 
   private final DatabaseClient spanner;
+  private final RedisCache cache;
+  private final long minCacheAgeMs;
+  private final Clock clock;
 
-  public TimeseriesServiceImpl(DatabaseClient spanner) {
+  public TimeseriesServiceImpl(
+      DatabaseClient spanner, RedisCache cache, Duration minCacheAge, Clock clock) {
     this.spanner = spanner;
+    this.cache = cache;
+    this.minCacheAgeMs = minCacheAge.toMillis();
+    this.clock = clock;
   }
 
   @Override
   public void getIntervalValues(
       GetIntervalValuesRequest request, StreamObserver<IntervalValues> responseObserver) {
+
+    var key = request.toByteArray();
+    var cacheable = isCacheable(request);
+
+    // If the request is cacheable (i.e., it's for intervals which are sufficiently in the past),
+    // check the cache for the response.
+    if (cacheable) {
+      var resp = cache.getIfPresent(key);
+      // If we find a cached response, serve it.
+      if (resp != null) {
+        responseObserver.onNext(resp);
+        responseObserver.onCompleted();
+        return;
+      }
+    }
+
     var statement =
         query(request)
             .bind("name")
@@ -54,13 +80,19 @@ public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServi
 
     try (var tx = spanner.singleUseReadOnlyTransaction(MAX_STALENESS);
         var results = tx.executeQuery(statement)) {
-      var resp = IntervalValues.newBuilder().setReadTimestamp(tx.getReadTimestamp().toProto());
+      var builder = IntervalValues.newBuilder().setReadTimestamp(tx.getReadTimestamp().toProto());
       while (results.next()) {
-        resp.addTimestamps(results.getTimestamp(0).getSeconds());
-        resp.addValues(results.getDouble(1));
+        builder.addTimestamps(results.getTimestamp(0).getSeconds());
+        builder.addValues(results.getDouble(1));
       }
-      responseObserver.onNext(resp.build());
+      var resp = builder.build();
+      responseObserver.onNext(resp);
       responseObserver.onCompleted();
+
+      // If the request was cacheable, but wasn't in the cache, put it in the cache.
+      if (cacheable) {
+        cache.put(key, resp);
+      }
     }
   }
 
@@ -158,5 +190,9 @@ public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServi
       default:
         throw new IllegalArgumentException("unrecognized aggregate function");
     }
+  }
+
+  private boolean isCacheable(GetIntervalValuesRequest request) {
+    return Timestamps.toMillis(request.getEnd()) < clock.millis() - minCacheAgeMs;
   }
 }
