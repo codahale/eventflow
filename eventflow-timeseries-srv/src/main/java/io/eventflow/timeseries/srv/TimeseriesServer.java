@@ -110,7 +110,7 @@ public class TimeseriesServer {
 
     RpcViews.registerAllGrpcViews();
 
-    ZPageHandlers.startHttpServerAndRegisterAll(port+1);
+    ZPageHandlers.startHttpServerAndRegisterAll(port + 1);
 
     LoggingTraceExporter.register();
   }
