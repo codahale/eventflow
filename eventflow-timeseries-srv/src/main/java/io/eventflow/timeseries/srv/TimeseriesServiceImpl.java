@@ -35,7 +35,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServiceImplBase {
-  private static final Tracer TRACER = Tracing.getTracer();
+  private static final Tracer tracer = Tracing.getTracer();
   private static final TimestampBound MAX_STALENESS =
       TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES);
 
@@ -57,7 +57,7 @@ public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServi
       GetIntervalValuesRequest request, StreamObserver<IntervalValues> responseObserver) {
     var key = request.toByteArray();
     var cacheable = isCacheable(request);
-    TRACER.getCurrentSpan().putAttribute("cacheable", booleanAttributeValue(cacheable));
+    tracer.getCurrentSpan().putAttribute("cacheable", booleanAttributeValue(cacheable));
 
     // If the request is cacheable (i.e., it's for intervals which are sufficiently in the past),
     // check the cache for the response.
