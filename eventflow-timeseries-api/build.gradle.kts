@@ -36,6 +36,7 @@ dependencies {
     api("com.google.protobuf:protobuf-java-util:${Versions.PROTOBUF}")
     api("io.grpc:grpc-protobuf:${Versions.GRPC}")
     api("io.grpc:grpc-stub:${Versions.GRPC}")
+    api("io.opencensus:opencensus-api:${Versions.OPEN_CENSUS}")
 
     compileOnly("javax.annotation:javax.annotation-api:1.3.2")
 
