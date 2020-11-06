@@ -17,12 +17,16 @@ package io.eventflow.timeseries.srv;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.eventflow.timeseries.api.IntervalValues;
+import io.opencensus.trace.AttributeValue;
+import io.opencensus.trace.Tracer;
+import io.opencensus.trace.Tracing;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.params.SetParams;
 
 public class RedisCache {
+  private static final Tracer tracer = Tracing.getTracer();
   private static final int TTL = (int) TimeUnit.DAYS.toSeconds(1);
   private final JedisPool pool;
 
@@ -32,20 +36,28 @@ public class RedisCache {
 
   @Nullable
   public IntervalValues getIfPresent(byte[] key) {
-    try (var jedis = pool.getResource()) {
-      var data = jedis.get(key);
-      if (data != null) {
-        return IntervalValues.parseFrom(data);
+    try (var ignored = tracer.spanBuilder("RedisCache.GetIfPresent").startScopedSpan()) {
+      try (var jedis = pool.getResource()) {
+        var data = jedis.get(key);
+        if (data != null) {
+          var intervalValues = IntervalValues.parseFrom(data);
+          tracer.getCurrentSpan().putAttribute("hit", AttributeValue.booleanAttributeValue(true));
+          return intervalValues;
+        }
+      } catch (InvalidProtocolBufferException e) {
+        // If we can't parse it, pretend it doesn't exist.
+        tracer.getCurrentSpan().addAnnotation("invalid protobuf");
       }
-    } catch (InvalidProtocolBufferException e) {
-      // If we can't parse it, pretend it doesn't exist.
+      tracer.getCurrentSpan().putAttribute("hit", AttributeValue.booleanAttributeValue(false));
+      return null;
     }
-    return null;
   }
 
   public void put(byte[] key, IntervalValues response) {
-    try (var jedis = pool.getResource()) {
-      jedis.set(key, response.toByteArray(), SetParams.setParams().ex(TTL));
+    try (var ignored = tracer.spanBuilder("RedisCache.Put").startScopedSpan()) {
+      try (var jedis = pool.getResource()) {
+        jedis.set(key, response.toByteArray(), SetParams.setParams().ex(TTL));
+      }
     }
   }
 }

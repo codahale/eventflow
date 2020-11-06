@@ -65,7 +65,6 @@ public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServi
       var resp = cache.getIfPresent(key);
       // If we find a cached response, serve it.
       if (resp != null) {
-        TRACER.getCurrentSpan().putAttribute("cache_hit", booleanAttributeValue(true));
         responseObserver.onNext(resp);
         responseObserver.onCompleted();
         return;
