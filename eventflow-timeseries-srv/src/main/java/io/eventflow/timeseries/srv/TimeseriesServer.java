@@ -21,6 +21,11 @@ import com.google.cloud.spanner.SpannerOptions;
 import com.google.common.io.Resources;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.opencensus.contrib.grpc.metrics.RpcViews;
+import io.opencensus.contrib.zpages.ZPageHandlers;
+import io.opencensus.exporter.trace.logging.LoggingTraceExporter;
+import io.opencensus.trace.Tracing;
+import io.opencensus.trace.samplers.Samplers;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Clock;
@@ -88,12 +93,26 @@ public class TimeseriesServer {
       maxCacheAge = Duration.parse(args[5]);
     }
 
+    setupTelemetry(port);
+
     try (var spanner = SpannerOptions.newBuilder().build().getService()) {
       var client = spanner.getDatabaseClient(DatabaseId.of(project, instance, database));
       var server = new TimeseriesServer(client, port, URI.create(redisUri), maxCacheAge);
       server.start();
       server.blockUntilShutdown();
     }
+  }
+
+  private static void setupTelemetry(int port) throws IOException {
+    var traceConfig = Tracing.getTraceConfig();
+    traceConfig.updateActiveTraceParams(
+        traceConfig.getActiveTraceParams().toBuilder().setSampler(Samplers.alwaysSample()).build());
+
+    RpcViews.registerAllGrpcViews();
+
+    ZPageHandlers.startHttpServerAndRegisterAll(port+1);
+
+    LoggingTraceExporter.register();
   }
 
   private static String gitVersion() {

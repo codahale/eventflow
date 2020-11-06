@@ -26,8 +26,7 @@ dependencies {
     implementation("io.opencensus:opencensus-api:${Versions.OPEN_CENSUS}")
     implementation("io.opencensus:opencensus-contrib-grpc-metrics:${Versions.OPEN_CENSUS}")
     implementation("io.opencensus:opencensus-impl:${Versions.OPEN_CENSUS}")
-    implementation("io.opencensus:opencensus-exporter-trace-stackdriver:${Versions.OPEN_CENSUS}")
-    implementation("io.opencensus:opencensus-exporter-stats-stackdriver:${Versions.OPEN_CENSUS}")
+    implementation("io.opencensus:opencensus-contrib-zpages:${Versions.OPEN_CENSUS}")
     implementation("io.opencensus:opencensus-exporter-trace-logging:${Versions.OPEN_CENSUS}")
 
     implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")

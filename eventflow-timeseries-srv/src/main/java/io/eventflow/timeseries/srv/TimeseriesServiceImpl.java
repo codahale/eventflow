@@ -55,54 +55,52 @@ public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServi
   @Override
   public void getIntervalValues(
       GetIntervalValuesRequest request, StreamObserver<IntervalValues> responseObserver) {
-    try (var ignored =
-        TRACER
-            .spanBuilder("io.eventflow.timeseries.srv.TimeseriesService.getIntervalValues")
-            .startScopedSpan()) {
-      var key = request.toByteArray();
-      var cacheable = isCacheable(request);
-      TRACER.getCurrentSpan().putAttribute("cacheable", booleanAttributeValue(cacheable));
+    var key = request.toByteArray();
+    var cacheable = isCacheable(request);
+    TRACER.getCurrentSpan().putAttribute("cacheable", booleanAttributeValue(cacheable));
 
-      // If the request is cacheable (i.e., it's for intervals which are sufficiently in the past),
-      // check the cache for the response.
-      if (cacheable) {
-        var resp = cache.getIfPresent(key);
-        // If we find a cached response, serve it.
-        if (resp != null) {
-          TRACER.getCurrentSpan().putAttribute("cache_hit", booleanAttributeValue(true));
-          responseObserver.onNext(resp);
-          responseObserver.onCompleted();
-          return;
-        }
-      }
-
-      var statement =
-          query(request)
-              .bind("name")
-              .to(request.getName())
-              .bind("tz")
-              .to(request.getTimeZone())
-              .bind("start")
-              .to(Timestamp.fromProto(request.getStart()))
-              .bind("end")
-              .to(Timestamp.fromProto(request.getEnd()))
-              .build();
-
-      try (var tx = spanner.singleUseReadOnlyTransaction(MAX_STALENESS);
-          var results = tx.executeQuery(statement)) {
-        var builder = IntervalValues.newBuilder().setReadTimestamp(tx.getReadTimestamp().toProto());
-        while (results.next()) {
-          builder.addTimestamps(results.getTimestamp(0).getSeconds());
-          builder.addValues(results.getDouble(1));
-        }
-        var resp = builder.build();
+    // If the request is cacheable (i.e., it's for intervals which are sufficiently in the past),
+    // check the cache for the response.
+    if (cacheable) {
+      var resp = cache.getIfPresent(key);
+      // If we find a cached response, serve it.
+      if (resp != null) {
+        TRACER.getCurrentSpan().putAttribute("cache_hit", booleanAttributeValue(true));
         responseObserver.onNext(resp);
         responseObserver.onCompleted();
+        return;
+      }
+    }
 
-        // If the request was cacheable, but wasn't in the cache, put it in the cache.
-        if (cacheable) {
-          cache.put(key, resp);
-        }
+    TRACER.getCurrentSpan().putAttribute("cache_hit", booleanAttributeValue(false));
+
+    var statement =
+        query(request)
+            .bind("name")
+            .to(request.getName())
+            .bind("tz")
+            .to(request.getTimeZone())
+            .bind("start")
+            .to(Timestamp.fromProto(request.getStart()))
+            .bind("end")
+            .to(Timestamp.fromProto(request.getEnd()))
+            .build();
+
+    try (var tx = spanner.singleUseReadOnlyTransaction(MAX_STALENESS);
+        var results = tx.executeQuery(statement)) {
+      var builder = IntervalValues.newBuilder();
+      while (results.next()) {
+        builder.addTimestamps(results.getTimestamp(0).getSeconds());
+        builder.addValues(results.getDouble(1));
+      }
+      builder.setReadTimestamp(tx.getReadTimestamp().toProto());
+      var resp = builder.build();
+      responseObserver.onNext(resp);
+      responseObserver.onCompleted();
+
+      // If the request was cacheable, but wasn't in the cache, put it in the cache.
+      if (cacheable) {
+        cache.put(key, resp);
       }
     }
   }
