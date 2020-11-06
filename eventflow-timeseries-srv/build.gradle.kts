@@ -21,6 +21,13 @@ dependencies {
     implementation("io.grpc:grpc-netty-shaded:${Versions.GRPC}")
     implementation("io.grpc:grpc-protobuf:${Versions.GRPC}")
     implementation("io.grpc:grpc-stub:${Versions.GRPC}")
+    implementation("io.grpc:grpc-census:${Versions.GRPC}")
+
+    implementation("io.opencensus:opencensus-api:${Versions.OPEN_CENSUS}")
+    implementation("io.opencensus:opencensus-contrib-grpc-metrics:${Versions.OPEN_CENSUS}")
+    implementation("io.opencensus:opencensus-impl:${Versions.OPEN_CENSUS}")
+    implementation("io.opencensus:opencensus-exporter-trace-stackdriver:${Versions.OPEN_CENSUS}")
+    implementation("io.opencensus:opencensus-exporter-stats-stackdriver:${Versions.OPEN_CENSUS}")
 
     implementation("com.google.cloud:google-cloud-spanner:3.0.1")
     implementation("redis.clients:jedis:3.3.0")
