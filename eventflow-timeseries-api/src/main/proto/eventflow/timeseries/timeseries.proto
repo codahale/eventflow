@@ -8,33 +8,14 @@ option java_package = "io.eventflow.timeseries.api";
 option java_outer_classname = "TimeseriesPB";
 option java_multiple_files = true;
 
-service Timeseries {
-  rpc Get (GetRequest) returns (GetResponse) {
+// A service which provides access to time series data.
+service TimeseriesService {
+  // Returns the intervals and values for a time series.
+  rpc GetIntervalValues (GetIntervalValuesRequest) returns (IntervalValues) {
   }
 }
 
-message GetRequest {
-  enum Granularity {
-    GRAN_UNKNOWN = 0;
-    GRAN_MINUTE = 1;
-    GRAN_HOUR = 2;
-    GRAN_DAY = 3;
-    GRAN_WEEK = 4;
-    GRAN_ISOWEEK = 5;
-    GRAN_MONTH = 6;
-    GRAN_QUARTER = 7;
-    GRAN_YEAR = 8;
-    GRAN_ISOYEAR = 9;
-  }
-
-  enum Aggregation {
-    AGG_UNKNOWN = 0;
-    AGG_SUM = 1;
-    AGG_MAX = 2;
-    AGG_MIN = 3;
-    AGG_AVG = 4;
-  }
-
+message GetIntervalValuesRequest {
   // The name of the time series to retrieve.
   string name = 1;
 
@@ -50,11 +31,12 @@ message GetRequest {
   // The level of granularity of intervals to return.
   Granularity granularity = 5;
 
-  // The aggregation function to be used for the measurements in each interval.
-  Aggregation aggregation = 6;
+  // The aggregate function to be used for the measurements in each interval.
+  AggregateFunction aggregateFunction = 6;
 }
 
-message GetResponse {
+// IntervalValues is a list of interval timestamps and their corresponding values.
+message IntervalValues {
   // The epoch second timestamps indicating the beginning of the intervals. These are represented
   // as int64 values so that responses will benefit from packed encoding.
   repeated int64 timestamps = 1;
@@ -66,3 +48,26 @@ message GetResponse {
   google.protobuf.Timestamp read_timestamp = 3;
 }
 
+// Granularity is the amount of time in a given interval. By default, a time series contains
+// minutely intervals.
+enum Granularity {
+  GRAN_MINUTE = 0;
+  GRAN_HOUR = 1;
+  GRAN_DAY = 2;
+  GRAN_WEEK = 3;
+  GRAN_ISOWEEK = 4;
+  GRAN_MONTH = 5;
+  GRAN_QUARTER = 6;
+  GRAN_YEAR = 7;
+  GRAN_ISOYEAR = 8;
+}
+
+// An aggregate function aggregates the minutely interval values to form less granular intervals. If
+// none is specified, the time series's minutely aggregate function is used.
+enum AggregateFunction {
+  AGG_NONE = 0;
+  AGG_SUM = 1;
+  AGG_MAX = 2;
+  AGG_MIN = 3;
+  AGG_AVG = 4;
+}

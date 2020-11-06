@@ -19,24 +19,27 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.Statement;
 import com.google.cloud.spanner.TimestampBound;
-import io.eventflow.timeseries.api.GetRequest;
-import io.eventflow.timeseries.api.GetResponse;
-import io.eventflow.timeseries.api.TimeseriesGrpc;
+import io.eventflow.timeseries.api.AggregateFunction;
+import io.eventflow.timeseries.api.GetIntervalValuesRequest;
+import io.eventflow.timeseries.api.Granularity;
+import io.eventflow.timeseries.api.IntervalValues;
+import io.eventflow.timeseries.api.TimeseriesServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import java.util.concurrent.TimeUnit;
 
-public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
+public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServiceImplBase {
   private static final TimestampBound MAX_STALENESS =
       TimestampBound.ofMaxStaleness(1, TimeUnit.MINUTES);
 
   private final DatabaseClient spanner;
 
-  public TimeseriesImpl(DatabaseClient spanner) {
+  public TimeseriesServiceImpl(DatabaseClient spanner) {
     this.spanner = spanner;
   }
 
   @Override
-  public void get(GetRequest request, StreamObserver<GetResponse> responseObserver) {
+  public void getIntervalValues(
+      GetIntervalValuesRequest request, StreamObserver<IntervalValues> responseObserver) {
     var statement =
         query(request)
             .bind("name")
@@ -51,7 +54,7 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
 
     try (var tx = spanner.singleUseReadOnlyTransaction(MAX_STALENESS);
         var results = tx.executeQuery(statement)) {
-      var resp = GetResponse.newBuilder().setReadTimestamp(tx.getReadTimestamp().toProto());
+      var resp = IntervalValues.newBuilder().setReadTimestamp(tx.getReadTimestamp().toProto());
       while (results.next()) {
         resp.addTimestamps(results.getTimestamp(0).getSeconds());
         resp.addValues(results.getDouble(1));
@@ -61,30 +64,39 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
     }
   }
 
-  private Statement.Builder query(GetRequest request) {
+  private Statement.Builder query(GetIntervalValuesRequest request) {
+    // Detect the interval aggregate function based on the name. This function is used to aggregate
+    // the multiple possible rows for each minutely interval into a single value.
     var intervalAggFunc = intervalAggFunc(request.getName());
-    var aggFunc = aggFunc(request.getAggregation());
 
-    // If the interval aggregation function is the same as the query aggregation function, we can
-    // aggregate the interval values directly, because the aggregation functions are commutative:
-    // the sum of sums of values is the sum of the values, etc.
-    if (intervalAggFunc.equals(aggFunc)) {
+    // Determine the query aggregate function. This function is used to aggregate minutely interval
+    // values into less granular interval values. If none is specified, the interval aggregate
+    // function is used.
+    var queryAggFunc = request.getAggregateFunction();
+    if (queryAggFunc == AggregateFunction.AGG_NONE) {
+      queryAggFunc = intervalAggFunc;
+    }
+
+    // If the interval aggregate function is the same as the query aggregate function, we can
+    // aggregate the interval values directly, because the aggregate functions are commutative: the
+    // sum of sums of values is the sum of the values, etc.
+    if (intervalAggFunc.equals(queryAggFunc)) {
       return Statement.newBuilder("SELECT TIMESTAMP_TRUNC(interval_ts, ")
           .append(granPart(request.getGranularity()))
           .append(", @tz), ")
-          .append(aggFunc)
+          .append(aggFunc(intervalAggFunc))
           .append(" FROM intervals_minutes")
           .append(" WHERE name = @name")
           .append(" AND interval_ts BETWEEN @start AND @end")
           .append(" GROUP BY 1 ORDER BY 1");
     }
 
-    // If the interval aggregation function and the query aggregation function are different, then
-    // we need to materialize the actual interval values in a common table expression, because the
+    // If the interval aggregate function and the query aggregate function are different, then we
+    // need to materialize the actual interval values in a common table expression, because e.g. the
     // average of values isn't the same as the average of the sum of values.
     return Statement.newBuilder("WITH intervals AS (")
         .append("SELECT TIMESTAMP_TRUNC(interval_ts, MINUTE, @tz) AS interval_ts, ")
-        .append(intervalAggFunc)
+        .append(aggFunc(intervalAggFunc))
         .append(" AS value")
         .append(" FROM intervals_minutes")
         .append(" WHERE name = @name")
@@ -94,24 +106,22 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
         .append(" SELECT TIMESTAMP_TRUNC(interval_ts, ")
         .append(granPart(request.getGranularity()))
         .append(", @tz), ")
-        .append(aggFunc)
+        .append(aggFunc(queryAggFunc))
         .append(" FROM intervals GROUP BY 1 ORDER BY 1");
   }
 
   // Detect the interval aggregation function based on the metric name.
-  private String intervalAggFunc(String name) {
+  private AggregateFunction intervalAggFunc(String name) {
     if (name.endsWith(".min")) {
-      return "MIN(value)";
+      return AggregateFunction.AGG_MIN;
     } else if (name.endsWith(".max")) {
-      return "MIN(value)";
+      return AggregateFunction.AGG_MAX;
     }
-    return "SUM(value)";
+    return AggregateFunction.AGG_SUM;
   }
 
-  private String granPart(GetRequest.Granularity granularity) {
+  private String granPart(Granularity granularity) {
     switch (granularity) {
-      case GRAN_UNKNOWN:
-        throw new IllegalArgumentException("missing granularity");
       case GRAN_MINUTE:
         return "MINUTE";
       case GRAN_HOUR:
@@ -135,10 +145,8 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
     }
   }
 
-  private String aggFunc(GetRequest.Aggregation aggregation) {
-    switch (aggregation) {
-      case AGG_UNKNOWN:
-        throw new IllegalArgumentException("missing aggregation function");
+  private String aggFunc(AggregateFunction aggregateFunction) {
+    switch (aggregateFunction) {
       case AGG_SUM:
         return "SUM(value)";
       case AGG_MAX:
@@ -148,7 +156,7 @@ public class TimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
       case AGG_AVG:
         return "AVG(value)";
       default:
-        throw new IllegalArgumentException("unrecognized aggregation function");
+        throw new IllegalArgumentException("unrecognized aggregate function");
     }
   }
 }

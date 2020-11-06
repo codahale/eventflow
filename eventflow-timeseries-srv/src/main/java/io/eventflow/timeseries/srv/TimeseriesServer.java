@@ -33,9 +33,9 @@ public class TimeseriesServer {
   private final Server server;
 
   public TimeseriesServer(DatabaseClient spanner, int port, URI redisUri, Duration maxCacheAge) {
-    var impl = new TimeseriesImpl(spanner);
+    var impl = new TimeseriesServiceImpl(spanner);
     var cache = new RedisCache(new JedisPool(redisUri));
-    var cached = new CachedTimeseriesImpl(impl, cache, Clock.systemUTC(), maxCacheAge);
+    var cached = new CachedTimeseriesServiceImpl(impl, cache, Clock.systemUTC(), maxCacheAge);
     this.server = ServerBuilder.forPort(port).addService(cached).build();
   }
 

@@ -25,9 +25,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.protobuf.Timestamp;
-import io.eventflow.timeseries.api.GetRequest;
-import io.eventflow.timeseries.api.GetResponse;
-import io.eventflow.timeseries.api.TimeseriesGrpc;
+import io.eventflow.timeseries.api.GetIntervalValuesRequest;
+import io.eventflow.timeseries.api.IntervalValues;
+import io.eventflow.timeseries.api.TimeseriesServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcServerRule;
 import java.time.Clock;
@@ -43,78 +43,79 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
-public class CachedTimeseriesImplTest {
+public class CachedTimeseriesServiceImplTest {
   private static final Clock CLOCK = Clock.fixed(Instant.ofEpochSecond(10000), ZoneOffset.UTC);
-  private static final GetResponse RESP =
-      GetResponse.newBuilder().addTimestamps(10).addValues(10).build();
+  private static final IntervalValues VALUES =
+      IntervalValues.newBuilder().addTimestamps(10).addValues(10).build();
 
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
   @Rule public GrpcServerRule grpcServerRule = new GrpcServerRule();
   @Mock public RedisCache cache;
   @Spy public final FakeBase base = new FakeBase();
-  private TimeseriesGrpc.TimeseriesBlockingStub client;
+  private TimeseriesServiceGrpc.TimeseriesServiceBlockingStub client;
 
   @Before
   public void setUp() {
     grpcServerRule
         .getServiceRegistry()
-        .addService(new CachedTimeseriesImpl(base, cache, CLOCK, Duration.ofSeconds(10)));
-    this.client = TimeseriesGrpc.newBlockingStub(grpcServerRule.getChannel());
+        .addService(new CachedTimeseriesServiceImpl(base, cache, CLOCK, Duration.ofSeconds(10)));
+    this.client = TimeseriesServiceGrpc.newBlockingStub(grpcServerRule.getChannel());
   }
 
   @Test
   public void getUncacheableRequest() {
     var req =
-        GetRequest.newBuilder()
+        GetIntervalValuesRequest.newBuilder()
             .setStart(Timestamp.newBuilder().setSeconds(9_000))
             .setEnd(Timestamp.newBuilder().setSeconds(10_000))
             .build();
 
-    assertThat(client.get(req)).isEqualTo(RESP);
-    assertThat(client.get(req)).isEqualTo(RESP);
+    assertThat(client.getIntervalValues(req)).isEqualTo(VALUES);
+    assertThat(client.getIntervalValues(req)).isEqualTo(VALUES);
 
-    verify(base, times(2)).get(eq(req), any());
+    verify(base, times(2)).getIntervalValues(eq(req), any());
     verifyNoInteractions(cache);
   }
 
   @Test
   public void getCacheableRequestEmptyCache() {
     var req =
-        GetRequest.newBuilder()
+        GetIntervalValuesRequest.newBuilder()
             .setStart(Timestamp.newBuilder().setSeconds(1_000))
             .setEnd(Timestamp.newBuilder().setSeconds(2_000))
             .build();
 
-    when(cache.getIfPresent(req.toByteArray())).thenReturn(null, RESP);
+    when(cache.getIfPresent(req.toByteArray())).thenReturn(null, VALUES);
 
-    assertThat(client.get(req)).isEqualTo(RESP);
-    assertThat(client.get(req)).isEqualTo(RESP);
+    assertThat(client.getIntervalValues(req)).isEqualTo(VALUES);
+    assertThat(client.getIntervalValues(req)).isEqualTo(VALUES);
 
-    verify(base, times(1)).get(eq(req), any());
-    verify(cache).put(req.toByteArray(), RESP);
+    verify(base, times(1)).getIntervalValues(eq(req), any());
+    verify(cache).put(req.toByteArray(), VALUES);
   }
 
   @Test
   public void getCacheableRequestFullCache() {
     var req =
-        GetRequest.newBuilder()
+        GetIntervalValuesRequest.newBuilder()
             .setStart(Timestamp.newBuilder().setSeconds(1_000))
             .setEnd(Timestamp.newBuilder().setSeconds(2_000))
             .build();
 
-    when(cache.getIfPresent(req.toByteArray())).thenReturn(RESP);
+    when(cache.getIfPresent(req.toByteArray())).thenReturn(VALUES);
 
-    assertThat(client.get(req)).isEqualTo(RESP);
-    assertThat(client.get(req)).isEqualTo(RESP);
+    assertThat(client.getIntervalValues(req)).isEqualTo(VALUES);
+    assertThat(client.getIntervalValues(req)).isEqualTo(VALUES);
 
-    verify(base, never()).get(eq(req), any());
+    verify(base, never()).getIntervalValues(eq(req), any());
     verify(cache, never()).put(any(), any());
   }
 
-  private static class FakeBase extends TimeseriesGrpc.TimeseriesImplBase {
+  private static class FakeBase extends TimeseriesServiceGrpc.TimeseriesServiceImplBase {
     @Override
-    public void get(GetRequest request, StreamObserver<GetResponse> responseObserver) {
-      responseObserver.onNext(RESP);
+    public void getIntervalValues(
+        GetIntervalValuesRequest request, StreamObserver<IntervalValues> responseObserver) {
+      responseObserver.onNext(VALUES);
       responseObserver.onCompleted();
     }
   }

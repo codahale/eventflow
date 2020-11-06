@@ -29,9 +29,10 @@ import com.google.cloud.spanner.Struct;
 import com.google.cloud.spanner.TimestampBound;
 import com.google.cloud.spanner.Type;
 import com.google.common.collect.ImmutableMap;
-import io.eventflow.timeseries.api.GetRequest;
+import io.eventflow.timeseries.api.AggregateFunction;
+import io.eventflow.timeseries.api.Granularity;
 import io.eventflow.timeseries.api.TimeseriesClient;
-import io.eventflow.timeseries.api.TimeseriesGrpc;
+import io.eventflow.timeseries.api.TimeseriesServiceGrpc;
 import io.grpc.testing.GrpcServerRule;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -47,7 +48,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
-public class TimeseriesImplTest {
+public class TimeseriesServiceImplTest {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
   @Rule public GrpcServerRule grpcServerRule = new GrpcServerRule();
   @Mock private DatabaseClient spanner;
@@ -56,8 +57,9 @@ public class TimeseriesImplTest {
 
   @Before
   public void setUp() {
-    grpcServerRule.getServiceRegistry().addService(new TimeseriesImpl(spanner));
-    this.client = new TimeseriesClient(TimeseriesGrpc.newBlockingStub(grpcServerRule.getChannel()));
+    grpcServerRule.getServiceRegistry().addService(new TimeseriesServiceImpl(spanner));
+    this.client =
+        new TimeseriesClient(TimeseriesServiceGrpc.newBlockingStub(grpcServerRule.getChannel()));
   }
 
   @Test
@@ -89,13 +91,13 @@ public class TimeseriesImplTest {
 
     var timeZone = ZoneId.of("America/Denver");
     var res =
-        client.get(
+        client.getIntervalValues(
             "example",
             Instant.parse("2020-10-29T00:00:00Z"),
             Instant.parse("2020-10-31T00:00:00Z"),
             timeZone,
-            GetRequest.Granularity.GRAN_MINUTE,
-            GetRequest.Aggregation.AGG_SUM);
+            Granularity.GRAN_MINUTE,
+            AggregateFunction.AGG_SUM);
 
     assertThat(res)
         .isEqualTo(
@@ -150,13 +152,13 @@ public class TimeseriesImplTest {
 
     var timeZone = ZoneId.of("America/Denver");
     var res =
-        client.get(
+        client.getIntervalValues(
             "example",
             Instant.parse("2020-10-29T00:00:00Z"),
             Instant.parse("2020-10-31T00:00:00Z"),
             timeZone,
-            GetRequest.Granularity.GRAN_HOUR,
-            GetRequest.Aggregation.AGG_AVG);
+            Granularity.GRAN_HOUR,
+            AggregateFunction.AGG_AVG);
 
     assertThat(res)
         .isEqualTo(
@@ -212,13 +214,13 @@ public class TimeseriesImplTest {
 
     var timeZone = ZoneId.of("America/Denver");
     var res =
-        client.get(
+        client.getIntervalValues(
             "example.min",
             Instant.parse("2020-10-29T00:00:00Z"),
             Instant.parse("2020-10-31T00:00:00Z"),
             timeZone,
-            GetRequest.Granularity.GRAN_MINUTE,
-            GetRequest.Aggregation.AGG_MAX);
+            Granularity.GRAN_MINUTE,
+            AggregateFunction.AGG_MAX);
 
     assertThat(res)
         .isEqualTo(

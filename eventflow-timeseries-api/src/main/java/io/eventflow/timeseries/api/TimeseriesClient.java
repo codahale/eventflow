@@ -17,37 +17,35 @@ package io.eventflow.timeseries.api;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.util.Timestamps;
-import io.eventflow.timeseries.api.GetRequest.Aggregation;
-import io.eventflow.timeseries.api.GetRequest.Granularity;
-import io.eventflow.timeseries.api.TimeseriesGrpc.TimeseriesBlockingStub;
+import io.eventflow.timeseries.api.TimeseriesServiceGrpc.TimeseriesServiceBlockingStub;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 public class TimeseriesClient {
-  private final TimeseriesBlockingStub stub;
+  private final TimeseriesServiceBlockingStub stub;
 
-  public TimeseriesClient(TimeseriesBlockingStub stub) {
+  public TimeseriesClient(TimeseriesServiceBlockingStub stub) {
     this.stub = stub;
   }
 
-  public ImmutableMap<ZonedDateTime, Double> get(
+  public ImmutableMap<ZonedDateTime, Double> getIntervalValues(
       String name,
       Instant start,
       Instant end,
       ZoneId timeZone,
       Granularity granularity,
-      Aggregation aggregation) {
+      AggregateFunction aggregateFunction) {
     var req =
-        GetRequest.newBuilder()
+        GetIntervalValuesRequest.newBuilder()
             .setName(name)
             .setStart(Timestamps.fromSeconds(start.getEpochSecond()))
             .setEnd(Timestamps.fromSeconds(end.getEpochSecond()))
             .setTimeZone(timeZone.getId())
             .setGranularity(granularity)
-            .setAggregation(aggregation)
+            .setAggregateFunction(aggregateFunction)
             .build();
-    var resp = stub.get(req);
+    var resp = stub.getIntervalValues(req);
     var results =
         ImmutableMap.<ZonedDateTime, Double>builderWithExpectedSize(resp.getTimestampsCount());
     for (int i = 0; i < resp.getTimestampsCount(); i++) {

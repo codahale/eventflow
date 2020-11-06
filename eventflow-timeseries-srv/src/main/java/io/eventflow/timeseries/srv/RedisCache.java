@@ -16,7 +16,7 @@
 package io.eventflow.timeseries.srv;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import io.eventflow.timeseries.api.GetResponse;
+import io.eventflow.timeseries.api.IntervalValues;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import redis.clients.jedis.JedisPool;
@@ -31,11 +31,11 @@ public class RedisCache {
   }
 
   @Nullable
-  public GetResponse getIfPresent(byte[] key) {
+  public IntervalValues getIfPresent(byte[] key) {
     try (var jedis = pool.getResource()) {
       var data = jedis.get(key);
       if (data != null) {
-        return GetResponse.parseFrom(data);
+        return IntervalValues.parseFrom(data);
       }
     } catch (InvalidProtocolBufferException e) {
       // If we can't parse it, pretend it doesn't exist.
@@ -43,7 +43,7 @@ public class RedisCache {
     return null;
   }
 
-  public void put(byte[] key, GetResponse response) {
+  public void put(byte[] key, IntervalValues response) {
     try (var jedis = pool.getResource()) {
       jedis.set(key, response.toByteArray(), SetParams.setParams().ex(TTL));
     }

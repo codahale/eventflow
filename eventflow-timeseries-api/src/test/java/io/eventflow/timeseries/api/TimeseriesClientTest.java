@@ -39,13 +39,14 @@ import org.mockito.quality.Strictness;
 public class TimeseriesClientTest {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
   @Rule public GrpcServerRule grpcServerRule = new GrpcServerRule();
-  @Mock public TimeseriesGrpc.TimeseriesImplBase service;
+  @Mock public TimeseriesServiceGrpc.TimeseriesServiceImplBase service;
   private TimeseriesClient client;
 
   @Before
   public void setUp() {
     grpcServerRule.getServiceRegistry().addService(service);
-    this.client = new TimeseriesClient(TimeseriesGrpc.newBlockingStub(grpcServerRule.getChannel()));
+    this.client =
+        new TimeseriesClient(TimeseriesServiceGrpc.newBlockingStub(grpcServerRule.getChannel()));
   }
 
   @Test
@@ -54,9 +55,9 @@ public class TimeseriesClientTest {
 
     doAnswer(
             invocation -> {
-              StreamObserver<GetResponse> observer = invocation.getArgument(1);
+              StreamObserver<IntervalValues> observer = invocation.getArgument(1);
               observer.onNext(
-                  GetResponse.newBuilder()
+                  IntervalValues.newBuilder()
                       .addTimestamps(123456789)
                       .addValues(22.3)
                       .addTimestamps(1234567891)
@@ -66,16 +67,16 @@ public class TimeseriesClientTest {
               return null;
             })
         .when(service)
-        .get(any(), any());
+        .getIntervalValues(any(), any());
 
     var results =
-        client.get(
+        client.getIntervalValues(
             "example.count",
             Instant.ofEpochSecond(1234),
             Instant.ofEpochSecond(4567),
             timeZone,
-            GetRequest.Granularity.GRAN_MINUTE,
-            GetRequest.Aggregation.AGG_AVG);
+            Granularity.GRAN_MINUTE,
+            AggregateFunction.AGG_AVG);
 
     assertThat(results)
         .isEqualTo(
@@ -86,15 +87,15 @@ public class TimeseriesClientTest {
                 45.6));
 
     verify(service)
-        .get(
+        .getIntervalValues(
             eq(
-                GetRequest.newBuilder()
+                GetIntervalValuesRequest.newBuilder()
                     .setName("example.count")
                     .setStart(Timestamps.fromSeconds(1234))
                     .setEnd(Timestamps.fromSeconds(4567))
                     .setTimeZone(timeZone.getId())
-                    .setGranularity(GetRequest.Granularity.GRAN_MINUTE)
-                    .setAggregation(GetRequest.Aggregation.AGG_AVG)
+                    .setGranularity(Granularity.GRAN_MINUTE)
+                    .setAggregateFunction(AggregateFunction.AGG_AVG)
                     .build()),
             any());
   }

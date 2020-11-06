@@ -15,9 +15,10 @@
  */
 package io.eventflow.timeseries.srv;
 
-import io.eventflow.timeseries.api.GetRequest;
+import io.eventflow.timeseries.api.AggregateFunction;
+import io.eventflow.timeseries.api.Granularity;
 import io.eventflow.timeseries.api.TimeseriesClient;
-import io.eventflow.timeseries.api.TimeseriesGrpc;
+import io.eventflow.timeseries.api.TimeseriesServiceGrpc;
 import io.grpc.ManagedChannelBuilder;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -25,7 +26,7 @@ import java.time.ZoneId;
 public class ClientTest {
   public static void main(String[] args) {
     var channel = ManagedChannelBuilder.forAddress("localhost", 8080).usePlaintext().build();
-    var stub = TimeseriesGrpc.newBlockingStub(channel);
+    var stub = TimeseriesServiceGrpc.newBlockingStub(channel);
 
     var client = new TimeseriesClient(stub);
 
@@ -34,42 +35,42 @@ public class ClientTest {
 
     System.out.println(
         "daily avg: "
-            + client.get(
+            + client.getIntervalValues(
                 "example",
                 start,
                 end,
                 ZoneId.systemDefault(),
-                GetRequest.Granularity.GRAN_DAY,
-                GetRequest.Aggregation.AGG_AVG));
+                Granularity.GRAN_DAY,
+                AggregateFunction.AGG_AVG));
 
     System.out.println(
         "hourly sums: "
-            + client.get(
+            + client.getIntervalValues(
                 "example",
                 start,
                 end,
                 ZoneId.systemDefault(),
-                GetRequest.Granularity.GRAN_HOUR,
-                GetRequest.Aggregation.AGG_SUM));
+                Granularity.GRAN_HOUR,
+                AggregateFunction.AGG_SUM));
 
     System.out.println(
         "yearly avg: "
-            + client.get(
+            + client.getIntervalValues(
                 "example",
                 start,
                 end,
                 ZoneId.systemDefault(),
-                GetRequest.Granularity.GRAN_YEAR,
-                GetRequest.Aggregation.AGG_AVG));
+                Granularity.GRAN_YEAR,
+                AggregateFunction.AGG_AVG));
 
     System.out.println(
         "minutely sums: "
-            + client.get(
+            + client.getIntervalValues(
                 "example",
                 start,
                 end,
                 ZoneId.systemDefault(),
-                GetRequest.Granularity.GRAN_MINUTE,
-                GetRequest.Aggregation.AGG_SUM));
+                Granularity.GRAN_MINUTE,
+                AggregateFunction.AGG_SUM));
   }
 }

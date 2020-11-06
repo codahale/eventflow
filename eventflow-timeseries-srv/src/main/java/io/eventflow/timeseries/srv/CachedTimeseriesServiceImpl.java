@@ -16,21 +16,21 @@
 package io.eventflow.timeseries.srv;
 
 import com.google.protobuf.util.Timestamps;
-import io.eventflow.timeseries.api.GetRequest;
-import io.eventflow.timeseries.api.GetResponse;
-import io.eventflow.timeseries.api.TimeseriesGrpc;
+import io.eventflow.timeseries.api.GetIntervalValuesRequest;
+import io.eventflow.timeseries.api.IntervalValues;
+import io.eventflow.timeseries.api.TimeseriesServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import java.time.Clock;
 import java.time.Duration;
 
-public class CachedTimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
-  private final TimeseriesGrpc.TimeseriesImplBase base;
+public class CachedTimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServiceImplBase {
+  private final TimeseriesServiceGrpc.TimeseriesServiceImplBase base;
   private final RedisCache cache;
   private final Clock clock;
   private final long minCacheThreshold;
 
-  public CachedTimeseriesImpl(
-      TimeseriesGrpc.TimeseriesImplBase base,
+  public CachedTimeseriesServiceImpl(
+      TimeseriesServiceGrpc.TimeseriesServiceImplBase base,
       RedisCache cache,
       Clock clock,
       Duration minCacheThreshold) {
@@ -41,7 +41,8 @@ public class CachedTimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
   }
 
   @Override
-  public void get(GetRequest request, StreamObserver<GetResponse> responseObserver) {
+  public void getIntervalValues(
+      GetIntervalValuesRequest request, StreamObserver<IntervalValues> responseObserver) {
     if (isCacheable(request)) {
       var key = request.toByteArray();
       var resp = cache.getIfPresent(key);
@@ -49,11 +50,11 @@ public class CachedTimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
         responseObserver.onNext(resp);
         responseObserver.onCompleted();
       } else {
-        base.get(
+        base.getIntervalValues(
             request,
             new StreamObserver<>() {
               @Override
-              public void onNext(GetResponse value) {
+              public void onNext(IntervalValues value) {
                 cache.put(key, value);
                 responseObserver.onNext(value);
               }
@@ -70,11 +71,11 @@ public class CachedTimeseriesImpl extends TimeseriesGrpc.TimeseriesImplBase {
             });
       }
     } else {
-      base.get(request, responseObserver);
+      base.getIntervalValues(request, responseObserver);
     }
   }
 
-  private boolean isCacheable(GetRequest request) {
+  private boolean isCacheable(GetIntervalValuesRequest request) {
     return Timestamps.toMillis(request.getEnd()) < clock.millis() - minCacheThreshold;
   }
 }
