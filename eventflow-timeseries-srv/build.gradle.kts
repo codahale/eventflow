@@ -28,6 +28,9 @@ dependencies {
     implementation("io.opencensus:opencensus-impl:${Versions.OPEN_CENSUS}")
     implementation("io.opencensus:opencensus-exporter-trace-stackdriver:${Versions.OPEN_CENSUS}")
     implementation("io.opencensus:opencensus-exporter-stats-stackdriver:${Versions.OPEN_CENSUS}")
+    implementation("io.opencensus:opencensus-exporter-trace-logging:${Versions.OPEN_CENSUS}")
+
+    implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
 
     implementation("com.google.cloud:google-cloud-spanner:3.0.1")
     implementation("redis.clients:jedis:3.3.0")
