@@ -18,6 +18,7 @@ package io.eventflow.timeseries.srv;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -147,6 +148,8 @@ public class TimeseriesServiceImplTest {
                 .bind("end")
                 .to(Timestamp.parseTimestamp("2020-10-31T00:00:00Z"))
                 .build());
+    inOrder.verify(rs, times(3)).next();
+    inOrder.verify(tx).getReadTimestamp();
     inOrder
         .verify(cache)
         .put(
@@ -270,6 +273,8 @@ public class TimeseriesServiceImplTest {
                 .bind("end")
                 .to(Timestamp.parseTimestamp("2020-10-31T00:00:00Z"))
                 .build());
+    inOrder.verify(rs, times(3)).next();
+    inOrder.verify(tx).getReadTimestamp();
     inOrder.verify(rs).close();
     inOrder.verify(tx).close();
   }
@@ -334,6 +339,8 @@ public class TimeseriesServiceImplTest {
                 .bind("end")
                 .to(Timestamp.parseTimestamp("2020-10-31T00:00:00Z"))
                 .build());
+    inOrder.verify(rs, times(3)).next();
+    inOrder.verify(tx).getReadTimestamp();
     inOrder.verify(rs).close();
     inOrder.verify(tx).close();
   }
@@ -396,6 +403,8 @@ public class TimeseriesServiceImplTest {
                 .bind("end")
                 .to(Timestamp.parseTimestamp("2020-10-31T00:00:00Z"))
                 .build());
+    inOrder.verify(rs, times(3)).next();
+    inOrder.verify(tx).getReadTimestamp();
     inOrder.verify(rs).close();
     inOrder.verify(tx).close();
   }
