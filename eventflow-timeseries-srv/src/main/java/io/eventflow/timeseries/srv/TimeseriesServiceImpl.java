@@ -93,9 +93,12 @@ public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServi
       // Convert the query results to a list of interval values.
       var builder = IntervalValues.newBuilder();
       while (results.next()) {
+        // To save space and time, we're storing timestamps as epoch seconds in a repeated, packed
+        // field. We don't need more precision than that.
         builder.addTimestamps(results.getTimestamp(0).getSeconds());
         builder.addValues(results.getDouble(1));
       }
+
       // Include the read timestamp from Spanner.
       builder.setReadTimestamp(tx.getReadTimestamp().toProto());
       var values = builder.build();
