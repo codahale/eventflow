@@ -72,5 +72,15 @@ public class ClientTest {
                 ZoneId.systemDefault(),
                 Granularity.GRAN_MINUTE,
                 AggregateFunction.AGG_SUM));
+
+    System.out.println(
+        "ancient request: "
+            + client.getIntervalValues(
+                "example",
+                Instant.parse("2010-10-29T00:00:00Z"),
+                Instant.parse("2010-10-29T00:00:00Z"),
+                ZoneId.systemDefault(),
+                Granularity.GRAN_MINUTE,
+                AggregateFunction.AGG_SUM));
   }
 }

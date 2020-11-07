@@ -109,6 +109,7 @@ public class TimeseriesServer {
         traceConfig.getActiveTraceParams().toBuilder().setSampler(Samplers.alwaysSample()).build());
 
     RpcViews.registerAllGrpcViews();
+    TimeseriesStats.registerViews();
 
     ZPageHandlers.startHttpServerAndRegisterAll(port + 1);
 

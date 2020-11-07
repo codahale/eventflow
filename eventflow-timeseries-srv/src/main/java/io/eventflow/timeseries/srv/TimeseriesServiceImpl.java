@@ -28,6 +28,11 @@ import io.eventflow.timeseries.api.Granularity;
 import io.eventflow.timeseries.api.IntervalValues;
 import io.eventflow.timeseries.api.TimeseriesServiceGrpc;
 import io.grpc.stub.StreamObserver;
+import io.opencensus.stats.Stats;
+import io.opencensus.stats.StatsRecorder;
+import io.opencensus.tags.TagMetadata;
+import io.opencensus.tags.Tagger;
+import io.opencensus.tags.Tags;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
 import java.time.Clock;
@@ -35,7 +40,9 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServiceImplBase {
+  private static final StatsRecorder stats = Stats.getStatsRecorder();
   private static final Tracer tracer = Tracing.getTracer();
+  private static final Tagger tagger = Tags.getTagger();
 
   private final DatabaseClient spanner;
   private final RedisCache cache;
@@ -56,6 +63,17 @@ public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServi
     var key = request.toByteArray();
     var cacheable = isCacheable(request);
     tracer.getCurrentSpan().putAttribute("cacheable", booleanAttributeValue(cacheable));
+    stats
+        .newMeasureMap()
+        .put(TimeseriesStats.GET_INTERVALS_REQUESTS, 1)
+        .record(
+            tagger
+                .currentBuilder()
+                .put(
+                    TimeseriesStats.CACHEABILITY,
+                    cacheable ? TimeseriesStats.CACHEABLE : TimeseriesStats.UNCACHEABLE,
+                    TagMetadata.create(TagMetadata.TagTtl.UNLIMITED_PROPAGATION))
+                .build());
 
     // If the request is cacheable (i.e., it's for intervals which are sufficiently in the past),
     // check the cache for the response.
