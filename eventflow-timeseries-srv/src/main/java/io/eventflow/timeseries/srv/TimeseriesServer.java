@@ -23,7 +23,6 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.opencensus.contrib.grpc.metrics.RpcViews;
 import io.opencensus.contrib.zpages.ZPageHandlers;
-import io.opencensus.exporter.trace.logging.LoggingTraceExporter;
 import io.opencensus.trace.Tracing;
 import io.opencensus.trace.samplers.Samplers;
 import java.io.IOException;
@@ -112,8 +111,6 @@ public class TimeseriesServer {
     TimeseriesStats.registerViews();
 
     ZPageHandlers.startHttpServerAndRegisterAll(port + 1);
-
-    LoggingTraceExporter.register();
   }
 
   private static String gitVersion() {
