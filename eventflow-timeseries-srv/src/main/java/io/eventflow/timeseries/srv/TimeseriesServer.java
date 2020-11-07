@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Clock;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import redis.clients.jedis.JedisPool;
@@ -74,32 +75,30 @@ public class TimeseriesServer {
   }
 
   public static void main(String[] args) throws IOException, InterruptedException {
-    var project = args[0];
-    var instance = args[1];
-    var database = args[2];
-    var port = 8080;
-    if (args.length > 3) {
-      port = Integer.parseInt(args[3]);
-    }
-
-    var redisUri = "redis://localhost:6379";
-    if (args.length > 4) {
-      redisUri = args[4];
-    }
-
-    var minCacheAge = Duration.ofDays(7);
-    if (args.length > 5) {
-      minCacheAge = Duration.parse(args[5]);
-    }
+    var instance = Objects.requireNonNull(System.getenv("SPANNER_INSTANCE"));
+    var database = Objects.requireNonNull(System.getenv("SPANNER_DB"));
+    var port = Integer.parseInt(getEnv("PORT", "8080"));
+    var redisUri = getEnv("REDIS_URI", "redis://localhost:6379");
+    var minCacheAge = Duration.parse(getEnv("MIN_CACHE_AGE", "PT168H"));
 
     setupTelemetry(port);
 
     try (var spanner = SpannerOptions.newBuilder().build().getService()) {
-      var client = spanner.getDatabaseClient(DatabaseId.of(project, instance, database));
+      var client =
+          spanner.getDatabaseClient(
+              DatabaseId.of(spanner.getOptions().getProjectId(), instance, database));
       var server = new TimeseriesServer(client, port, URI.create(redisUri), minCacheAge);
       server.start();
       server.blockUntilShutdown();
     }
+  }
+
+  private static String getEnv(String name, String defaultValue) {
+    var s = System.getenv(name);
+    if (s != null) {
+      return s;
+    }
+    return defaultValue;
   }
 
   private static void setupTelemetry(int port) throws IOException {
