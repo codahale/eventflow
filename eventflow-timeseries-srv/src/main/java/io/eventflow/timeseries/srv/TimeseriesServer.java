@@ -88,16 +88,16 @@ public class TimeseriesServer {
       redisUri = args[4];
     }
 
-    var maxCacheAge = Duration.ofDays(7);
+    var minCacheAge = Duration.ofDays(7);
     if (args.length > 5) {
-      maxCacheAge = Duration.parse(args[5]);
+      minCacheAge = Duration.parse(args[5]);
     }
 
     setupTelemetry(port);
 
     try (var spanner = SpannerOptions.newBuilder().build().getService()) {
       var client = spanner.getDatabaseClient(DatabaseId.of(project, instance, database));
-      var server = new TimeseriesServer(client, port, URI.create(redisUri), maxCacheAge);
+      var server = new TimeseriesServer(client, port, URI.create(redisUri), minCacheAge);
       server.start();
       server.blockUntilShutdown();
     }
