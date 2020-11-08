@@ -3,10 +3,16 @@
   <Appenders>
     <Console name="LogToConsole" target="SYSTEM_OUT">
       <LogstashLayout dateTimeFormatPattern="yyyy-MM-dd'T'HH:mm:ss.SSSZZZ"
-        eventTemplateUri="classpath:CloudRunFormat.json"
+        eventTemplateUri="classpath:LogstashJsonEventLayoutV1.json"
         prettyPrintEnabled="false"
         timeZoneId="UTC"
-        stackTraceEnabled="true"/>
+        stackTraceEnabled="true">
+        <EventTemplateAdditionalFields>
+          <KeyValuePair key="logging.googleapis.com/trace" value="$${ctx:traceId}"/>
+          <KeyValuePair key="logging.googleapis.com/spanId" value="$${ctx:spanId}"/>
+          <KeyValuePair key="logging.googleapis.com/trace_sampled" value="$${ctx:traceSampled}"/>
+        </EventTemplateAdditionalFields>
+      </LogstashLayout>
     </Console>
   </Appenders>
   <Loggers>
