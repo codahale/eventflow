@@ -18,14 +18,11 @@ package io.eventflow.timeseries.api;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.timeseries.api.TimeSeriesServiceGrpc.TimeSeriesServiceBlockingStub;
-import io.opencensus.trace.Tracer;
-import io.opencensus.trace.Tracing;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 public class TimeSeriesClient {
-  private static final Tracer TRACER = Tracing.getTracer();
   private final TimeSeriesServiceBlockingStub stub;
 
   public TimeSeriesClient(TimeSeriesServiceBlockingStub stub) {
@@ -39,28 +36,23 @@ public class TimeSeriesClient {
       ZoneId timeZone,
       Granularity granularity,
       AggregateFunction aggregateFunction) {
-    try (var ignored =
-        TRACER
-            .spanBuilder("io.eventflow.timeseries.api.TimeSeriesClient.getIntervalValues")
-            .startScopedSpan()) {
-      var req =
-          GetIntervalValuesRequest.newBuilder()
-              .setName(name)
-              .setStart(Timestamps.fromSeconds(start.getEpochSecond()))
-              .setEnd(Timestamps.fromSeconds(end.getEpochSecond()))
-              .setTimeZone(timeZone.getId())
-              .setGranularity(granularity)
-              .setAggregateFunction(aggregateFunction)
-              .build();
-      var resp = stub.getIntervalValues(req);
-      var results =
-          ImmutableMap.<ZonedDateTime, Double>builderWithExpectedSize(resp.getTimestampsCount());
-      for (int i = 0; i < resp.getTimestampsCount(); i++) {
-        var ts = Instant.ofEpochSecond(resp.getTimestamps(i));
-        results.put(ts.atZone(timeZone), resp.getValues(i));
-      }
-      return results.build();
+    var req =
+        GetIntervalValuesRequest.newBuilder()
+            .setName(name)
+            .setStart(Timestamps.fromSeconds(start.getEpochSecond()))
+            .setEnd(Timestamps.fromSeconds(end.getEpochSecond()))
+            .setTimeZone(timeZone.getId())
+            .setGranularity(granularity)
+            .setAggregateFunction(aggregateFunction)
+            .build();
+    var resp = stub.getIntervalValues(req);
+    var results =
+        ImmutableMap.<ZonedDateTime, Double>builderWithExpectedSize(resp.getTimestampsCount());
+    for (int i = 0; i < resp.getTimestampsCount(); i++) {
+      var ts = Instant.ofEpochSecond(resp.getTimestamps(i));
+      results.put(ts.atZone(timeZone), resp.getValues(i));
     }
+    return results.build();
   }
 
   public TimeSeriesList listTimeSeries(String namePrefix) {
