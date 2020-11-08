@@ -23,10 +23,16 @@ fun isNonStable(version: String): Boolean {
     return isStable.not()
 }
 
+// Ignore all updates to OpenCensus, since it's tightly coupled to gRPC. When there's a new gRPC
+// version, make sure OpenCensus gets upgraded too.
+fun isNewOpenCensus(candidate: ModuleComponentIdentifier, currentVersion: String): Boolean {
+    return (candidate.group == "io.opencensus" && candidate.version != currentVersion)
+}
+
 tasks.named("dependencyUpdates", DependencyUpdatesTask::class.java).configure {
     revision = "release"
     rejectVersionIf {
-        isNonStable(candidate.version)
+        isNonStable(candidate.version) || isNewOpenCensus(candidate, currentVersion)
     }
 }
 
