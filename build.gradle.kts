@@ -11,7 +11,7 @@ plugins {
     idea
     java
     id("com.diffplug.spotless") version "5.7.0"
-    id("com.github.ben-manes.versions") version "0.34.0"
+    id("com.github.ben-manes.versions") version "0.35.0"
     id("com.google.protobuf") version "0.8.13"
     id("net.ltgt.errorprone") version "1.3.0"
 }
