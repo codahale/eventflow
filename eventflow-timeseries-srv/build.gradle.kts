@@ -32,7 +32,7 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-api:${Versions.LOG4J}")
     implementation("org.apache.logging.log4j:log4j-core:${Versions.LOG4J}")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:${Versions.LOG4J}")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.11.3")
+    implementation("com.vlkan.log4j2:log4j2-logstash-layout:1.0.5")
 
     implementation("com.google.cloud:google-cloud-spanner:3.0.1")
     implementation("redis.clients:jedis:3.3.0")
