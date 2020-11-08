@@ -62,4 +62,9 @@ public class TimeSeriesClient {
       return results.build();
     }
   }
+
+  public TimeSeriesList listTimeSeries(String namePrefix) {
+    return stub.listTimeSeries(
+        ListTimeSeriesRequest.newBuilder().setNamePrefix(namePrefix).build());
+  }
 }

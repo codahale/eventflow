@@ -10,9 +10,34 @@ option java_multiple_files = true;
 
 // A service which provides access to time series data.
 service TimeSeriesService {
+  // Returns the time series which match the given conditions.
+  rpc ListTimeSeries (ListTimeSeriesRequest) returns (TimeSeriesList) {
+  }
+
   // Returns the intervals and values for a time series.
   rpc GetIntervalValues (GetIntervalValuesRequest) returns (IntervalValues) {
   }
+}
+
+message ListTimeSeriesRequest {
+  // The prefix of the time series names.
+  string name_prefix = 1;
+}
+
+message TimeSeriesList {
+  // The time series which match the given name prefix.
+  repeated TimeSeries items = 1;
+
+  // The read timestamp of the Spanner transaction, setting the upper bound for staleness.
+  google.protobuf.Timestamp read_timestamp = 3;
+}
+
+message TimeSeries {
+  // The name of the time series.
+  string name = 1;
+
+  // The interval aggregate function for the time series (only ever SUM, MIN, MAX).
+  AggregateFunction aggregate_function = 2;
 }
 
 message GetIntervalValuesRequest {

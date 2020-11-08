@@ -26,6 +26,9 @@ import io.eventflow.timeseries.api.AggregateFunction;
 import io.eventflow.timeseries.api.GetIntervalValuesRequest;
 import io.eventflow.timeseries.api.Granularity;
 import io.eventflow.timeseries.api.IntervalValues;
+import io.eventflow.timeseries.api.ListTimeSeriesRequest;
+import io.eventflow.timeseries.api.TimeSeries;
+import io.eventflow.timeseries.api.TimeSeriesList;
 import io.eventflow.timeseries.api.TimeSeriesServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import io.opencensus.stats.Stats;
@@ -40,9 +43,12 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class TimeSeriesServiceImpl extends TimeSeriesServiceGrpc.TimeSeriesServiceImplBase {
+
   private static final StatsRecorder stats = Stats.getStatsRecorder();
   private static final Tracer tracer = Tracing.getTracer();
   private static final Tagger tagger = Tags.getTagger();
+
+  static final TimestampBound STALENESS = TimestampBound.ofExactStaleness(1, TimeUnit.MINUTES);
 
   private final DatabaseClient spanner;
   private final RedisCache cache;
@@ -55,6 +61,29 @@ public class TimeSeriesServiceImpl extends TimeSeriesServiceGrpc.TimeSeriesServi
     this.cache = cache;
     this.minCacheAgeMs = minCacheAge.toMillis();
     this.clock = clock;
+  }
+
+  @Override
+  public void listTimeSeries(
+      ListTimeSeriesRequest request, StreamObserver<TimeSeriesList> responseObserver) {
+    var statement =
+        Statement.newBuilder(
+                "SELECT DISTINCT name FROM intervals_minutes WHERE STARTS_WITH(name, @prefix)")
+            .bind("prefix")
+            .to(request.getNamePrefix())
+            .build();
+
+    try (var tx = spanner.singleUseReadOnlyTransaction(STALENESS);
+        var results = tx.executeQuery(statement)) {
+      var response = TimeSeriesList.newBuilder();
+      while (results.next()) {
+        var name = results.getString(0);
+        var aggFunc = intervalAggFunc(name);
+        response.addItems(TimeSeries.newBuilder().setName(name).setAggregateFunction(aggFunc));
+      }
+      responseObserver.onNext(response.setReadTimestamp(tx.getReadTimestamp().toProto()).build());
+      responseObserver.onCompleted();
+    }
   }
 
   @Override
@@ -103,9 +132,7 @@ public class TimeSeriesServiceImpl extends TimeSeriesServiceGrpc.TimeSeriesServi
     // Use a single-use, read-only transaction with an exact staleness bound. This allows results to
     // be served from replicas without having to negotiate between them, which reduces latency and
     // contention at the end of the time series.
-    try (var tx =
-            spanner.singleUseReadOnlyTransaction(
-                TimestampBound.ofExactStaleness(1, TimeUnit.MINUTES));
+    try (var tx = spanner.singleUseReadOnlyTransaction(STALENESS);
         var results = tx.executeQuery(statement)) {
 
       // Convert the query results to a list of interval values.

@@ -29,7 +29,6 @@ import com.google.cloud.spanner.ReadOnlyTransaction;
 import com.google.cloud.spanner.ResultSets;
 import com.google.cloud.spanner.Statement;
 import com.google.cloud.spanner.Struct;
-import com.google.cloud.spanner.TimestampBound;
 import com.google.cloud.spanner.Type;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.util.Timestamps;
@@ -37,7 +36,9 @@ import io.eventflow.timeseries.api.AggregateFunction;
 import io.eventflow.timeseries.api.GetIntervalValuesRequest;
 import io.eventflow.timeseries.api.Granularity;
 import io.eventflow.timeseries.api.IntervalValues;
+import io.eventflow.timeseries.api.TimeSeries;
 import io.eventflow.timeseries.api.TimeSeriesClient;
+import io.eventflow.timeseries.api.TimeSeriesList;
 import io.eventflow.timeseries.api.TimeSeriesServiceGrpc;
 import io.grpc.testing.GrpcServerRule;
 import java.text.ParseException;
@@ -47,7 +48,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -73,6 +73,52 @@ public class TimeSeriesServiceImplTest {
         .addService(new TimeSeriesServiceImpl(spanner, cache, Duration.ofDays(1), clock));
     this.client =
         new TimeSeriesClient(TimeSeriesServiceGrpc.newBlockingStub(grpcServerRule.getChannel()));
+  }
+
+  @Test
+  public void listTimeSeries() {
+    var rs =
+        spy(
+            ResultSets.forRows(
+                Type.struct(Type.StructField.of("n0", Type.string())),
+                List.of(
+                    Struct.newBuilder().set("n0").to("example1.count").build(),
+                    Struct.newBuilder().set("n0").to("example1.attr.min").build())));
+
+    when(tx.executeQuery(any())).thenReturn(rs);
+    when(tx.getReadTimestamp()).thenReturn(Timestamp.ofTimeSecondsAndNanos(12345678, 0));
+    when(spanner.singleUseReadOnlyTransaction(TimeSeriesServiceImpl.STALENESS)).thenReturn(tx);
+
+    var results = client.listTimeSeries("example");
+
+    assertThat(results)
+        .isEqualTo(
+            TimeSeriesList.newBuilder()
+                .addItems(
+                    TimeSeries.newBuilder()
+                        .setName("example1.count")
+                        .setAggregateFunction(AggregateFunction.AGG_SUM))
+                .addItems(
+                    TimeSeries.newBuilder()
+                        .setName("example1.attr.min")
+                        .setAggregateFunction(AggregateFunction.AGG_MIN))
+                .setReadTimestamp(
+                    com.google.protobuf.Timestamp.newBuilder().setSeconds(12345678).build())
+                .build());
+
+    var inOrder = Mockito.inOrder(tx, rs);
+    inOrder
+        .verify(tx)
+        .executeQuery(
+            Statement.newBuilder(
+                    "SELECT DISTINCT name FROM intervals_minutes WHERE STARTS_WITH(name, @prefix)")
+                .bind("prefix")
+                .to("example")
+                .build());
+    inOrder.verify(rs, times(3)).next();
+    inOrder.verify(tx).getReadTimestamp();
+    inOrder.verify(rs).close();
+    inOrder.verify(tx).close();
   }
 
   @Test
@@ -114,8 +160,7 @@ public class TimeSeriesServiceImplTest {
 
     when(tx.executeQuery(any())).thenReturn(rs);
     when(tx.getReadTimestamp()).thenReturn(Timestamp.ofTimeSecondsAndNanos(12345678, 0));
-    when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofExactStaleness(1, TimeUnit.MINUTES)))
-        .thenReturn(tx);
+    when(spanner.singleUseReadOnlyTransaction(TimeSeriesServiceImpl.STALENESS)).thenReturn(tx);
 
     var res =
         client.getIntervalValues(
@@ -238,8 +283,7 @@ public class TimeSeriesServiceImplTest {
 
     when(tx.executeQuery(any())).thenReturn(rs);
     when(tx.getReadTimestamp()).thenReturn(Timestamp.ofTimeSecondsAndNanos(12345678, 0));
-    when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofExactStaleness(1, TimeUnit.MINUTES)))
-        .thenReturn(tx);
+    when(spanner.singleUseReadOnlyTransaction(TimeSeriesServiceImpl.STALENESS)).thenReturn(tx);
 
     var timeZone = ZoneId.of("America/Denver");
     var res =
@@ -304,8 +348,7 @@ public class TimeSeriesServiceImplTest {
                         .build())));
     when(tx.executeQuery(any())).thenReturn(rs);
     when(tx.getReadTimestamp()).thenReturn(Timestamp.ofTimeSecondsAndNanos(12345678, 0));
-    when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofExactStaleness(1, TimeUnit.MINUTES)))
-        .thenReturn(tx);
+    when(spanner.singleUseReadOnlyTransaction(TimeSeriesServiceImpl.STALENESS)).thenReturn(tx);
 
     var timeZone = ZoneId.of("America/Denver");
     var res =
@@ -369,8 +412,7 @@ public class TimeSeriesServiceImplTest {
 
     when(tx.executeQuery(any())).thenReturn(rs);
     when(tx.getReadTimestamp()).thenReturn(Timestamp.ofTimeSecondsAndNanos(12345678, 0));
-    when(spanner.singleUseReadOnlyTransaction(TimestampBound.ofExactStaleness(1, TimeUnit.MINUTES)))
-        .thenReturn(tx);
+    when(spanner.singleUseReadOnlyTransaction(TimeSeriesServiceImpl.STALENESS)).thenReturn(tx);
 
     var timeZone = ZoneId.of("America/Denver");
     var res =

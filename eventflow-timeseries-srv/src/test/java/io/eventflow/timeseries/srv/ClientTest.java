@@ -32,6 +32,8 @@ public class ClientTest {
     var start = Instant.parse("2020-10-29T00:00:00Z");
     var end = Instant.parse("2020-11-01T00:00:00Z");
 
+    System.out.println(client.listTimeSeries("exa"));
+
     System.out.println(
         "daily avg: "
             + client.getIntervalValues(
