@@ -32,9 +32,12 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisPool;
 
 public class TimeseriesServer {
+  private static final Logger LOGGER = LoggerFactory.getLogger(TimeseriesServer.class);
   private final Server server;
 
   public TimeseriesServer(DatabaseClient spanner, int port, URI redisUri, Duration minCacheAge) {
@@ -46,7 +49,7 @@ public class TimeseriesServer {
   @SuppressWarnings("CatchAndPrintStackTrace")
   public void start() throws IOException {
     server.start();
-    System.out.println("server is running, " + gitVersion());
+    LOGGER.info("server started, version = {}", gitVersion());
     Runtime.getRuntime()
         .addShutdownHook(
             new Thread(

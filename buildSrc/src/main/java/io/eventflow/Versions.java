@@ -20,5 +20,6 @@ public class Versions {
   public static final String BEAM = "2.25.0";
   public static final String GRPC = "1.33.1";
   public static final String OPEN_CENSUS = "0.24.0";
+  public static final String LOG4J = "2.13.3";
   public static final String SLF4J = "1.7.30";
 }

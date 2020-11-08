@@ -27,8 +27,12 @@ dependencies {
     implementation("io.opencensus:opencensus-contrib-grpc-metrics:${Versions.OPEN_CENSUS}")
     implementation("io.opencensus:opencensus-impl:${Versions.OPEN_CENSUS}")
     implementation("io.opencensus:opencensus-contrib-zpages:${Versions.OPEN_CENSUS}")
+    implementation("io.opencensus:opencensus-contrib-log-correlation-log4j2:${Versions.OPEN_CENSUS}")
 
-    implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
+    implementation("org.apache.logging.log4j:log4j-api:${Versions.LOG4J}")
+    implementation("org.apache.logging.log4j:log4j-core:${Versions.LOG4J}")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:${Versions.LOG4J}")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.11.3")
 
     implementation("com.google.cloud:google-cloud-spanner:3.0.1")
     implementation("redis.clients:jedis:3.3.0")
