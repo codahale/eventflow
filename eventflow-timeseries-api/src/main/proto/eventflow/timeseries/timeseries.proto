@@ -58,6 +58,9 @@ message GetIntervalValuesRequest {
 
   // The aggregate function to be used for the measurements in each interval.
   AggregateFunction aggregateFunction = 6;
+
+  // If set, bypasses the cache.
+  bool no_cache = 7;
 }
 
 // IntervalValues is a list of interval timestamps and their corresponding values.

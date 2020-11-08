@@ -256,6 +256,7 @@ public class TimeSeriesServiceImpl extends TimeSeriesServiceGrpc.TimeSeriesServi
   }
 
   private boolean isCacheable(GetIntervalValuesRequest request) {
-    return Timestamps.toMillis(request.getEnd()) < clock.millis() - minCacheAgeMs;
+    return !request.getNoCache()
+        && Timestamps.toMillis(request.getEnd()) < clock.millis() - minCacheAgeMs;
   }
 }
