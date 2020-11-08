@@ -97,10 +97,6 @@ allprojects {
             })
         }
 
-        kotlin {
-            ktfmt()
-        }
-
         kotlinGradle {
             ktlint()
         }
