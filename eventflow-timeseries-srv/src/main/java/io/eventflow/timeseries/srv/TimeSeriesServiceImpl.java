@@ -26,7 +26,7 @@ import io.eventflow.timeseries.api.AggregateFunction;
 import io.eventflow.timeseries.api.GetIntervalValuesRequest;
 import io.eventflow.timeseries.api.Granularity;
 import io.eventflow.timeseries.api.IntervalValues;
-import io.eventflow.timeseries.api.TimeseriesServiceGrpc;
+import io.eventflow.timeseries.api.TimeSeriesServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import io.opencensus.stats.Stats;
 import io.opencensus.stats.StatsRecorder;
@@ -39,7 +39,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServiceImplBase {
+public class TimeSeriesServiceImpl extends TimeSeriesServiceGrpc.TimeSeriesServiceImplBase {
   private static final StatsRecorder stats = Stats.getStatsRecorder();
   private static final Tracer tracer = Tracing.getTracer();
   private static final Tagger tagger = Tags.getTagger();
@@ -49,7 +49,7 @@ public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServi
   private final long minCacheAgeMs;
   private final Clock clock;
 
-  public TimeseriesServiceImpl(
+  public TimeSeriesServiceImpl(
       DatabaseClient spanner, RedisCache cache, Duration minCacheAge, Clock clock) {
     this.spanner = spanner;
     this.cache = cache;
@@ -65,13 +65,13 @@ public class TimeseriesServiceImpl extends TimeseriesServiceGrpc.TimeseriesServi
     tracer.getCurrentSpan().putAttribute("cacheable", booleanAttributeValue(cacheable));
     stats
         .newMeasureMap()
-        .put(TimeseriesStats.GET_INTERVALS_REQUESTS, 1)
+        .put(TimeSeriesStats.GET_INTERVALS_REQUESTS, 1)
         .record(
             tagger
                 .currentBuilder()
                 .put(
-                    TimeseriesStats.CACHEABILITY,
-                    cacheable ? TimeseriesStats.CACHEABLE : TimeseriesStats.UNCACHEABLE,
+                    TimeSeriesStats.CACHEABILITY,
+                    cacheable ? TimeSeriesStats.CACHEABLE : TimeSeriesStats.UNCACHEABLE,
                     TagMetadata.create(TagMetadata.TagTtl.UNLIMITED_PROPAGATION))
                 .build());
 

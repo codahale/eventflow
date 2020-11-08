@@ -23,7 +23,7 @@ import io.opencensus.tags.TagKey;
 import io.opencensus.tags.TagValue;
 import java.util.List;
 
-public class TimeseriesStats {
+public class TimeSeriesStats {
 
   static final Measure.MeasureLong CACHE_HIT =
       Measure.MeasureLong.create(
@@ -70,7 +70,7 @@ public class TimeseriesStats {
               Aggregation.Count.create(),
               List.of(CACHEABILITY)));
 
-  private TimeseriesStats() {
+  private TimeSeriesStats() {
     // singleton
   }
 

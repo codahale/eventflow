@@ -46,14 +46,14 @@ public class RedisCache {
         if (data != null) {
           var intervalValues = IntervalValues.parseFrom(data);
           tracer.getCurrentSpan().putAttribute("hit", AttributeValue.booleanAttributeValue(true));
-          stats.newMeasureMap().put(TimeseriesStats.CACHE_HIT, 1).record();
+          stats.newMeasureMap().put(TimeSeriesStats.CACHE_HIT, 1).record();
           return intervalValues;
         }
       } catch (InvalidProtocolBufferException e) {
         // If we can't parse it, pretend it doesn't exist.
         tracer.getCurrentSpan().addAnnotation("invalid protobuf");
       }
-      stats.newMeasureMap().put(TimeseriesStats.CACHE_MISS, 1).record();
+      stats.newMeasureMap().put(TimeSeriesStats.CACHE_MISS, 1).record();
       tracer.getCurrentSpan().putAttribute("hit", AttributeValue.booleanAttributeValue(false));
       return null;
     }
@@ -62,7 +62,7 @@ public class RedisCache {
   public void put(byte[] key, IntervalValues response) {
     try (var ignored = tracer.spanBuilder("RedisCache.Put").startScopedSpan()) {
       try (var jedis = pool.getResource()) {
-        stats.newMeasureMap().put(TimeseriesStats.CACHE_WRITE, 1).record();
+        stats.newMeasureMap().put(TimeSeriesStats.CACHE_WRITE, 1).record();
         jedis.set(key, response.toByteArray(), SetParams.setParams().ex(TTL));
       }
     }

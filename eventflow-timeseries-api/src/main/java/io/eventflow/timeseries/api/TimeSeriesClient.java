@@ -17,18 +17,18 @@ package io.eventflow.timeseries.api;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.util.Timestamps;
-import io.eventflow.timeseries.api.TimeseriesServiceGrpc.TimeseriesServiceBlockingStub;
+import io.eventflow.timeseries.api.TimeSeriesServiceGrpc.TimeSeriesServiceBlockingStub;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-public class TimeseriesClient {
+public class TimeSeriesClient {
   private static final Tracer TRACER = Tracing.getTracer();
-  private final TimeseriesServiceBlockingStub stub;
+  private final TimeSeriesServiceBlockingStub stub;
 
-  public TimeseriesClient(TimeseriesServiceBlockingStub stub) {
+  public TimeSeriesClient(TimeSeriesServiceBlockingStub stub) {
     this.stub = stub;
   }
 
@@ -41,7 +41,7 @@ public class TimeseriesClient {
       AggregateFunction aggregateFunction) {
     try (var ignored =
         TRACER
-            .spanBuilder("io.eventflow.timeseries.api.TimeseriesClient.getIntervalValues")
+            .spanBuilder("io.eventflow.timeseries.api.TimeSeriesClient.getIntervalValues")
             .startScopedSpan()) {
       var req =
           GetIntervalValuesRequest.newBuilder()

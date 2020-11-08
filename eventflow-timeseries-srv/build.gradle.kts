@@ -41,5 +41,5 @@ dependencies {
 }
 
 application {
-    mainClass.set("io.eventflow.timeseries.srv.TimeseriesServer")
+    mainClass.set("io.eventflow.timeseries.srv.TimeSeriesServer")
 }

@@ -36,17 +36,17 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
-public class TimeseriesClientTest {
+public class TimeSeriesClientTest {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
   @Rule public GrpcServerRule grpcServerRule = new GrpcServerRule();
-  @Mock public TimeseriesServiceGrpc.TimeseriesServiceImplBase service;
-  private TimeseriesClient client;
+  @Mock public TimeSeriesServiceGrpc.TimeSeriesServiceImplBase service;
+  private TimeSeriesClient client;
 
   @Before
   public void setUp() {
     grpcServerRule.getServiceRegistry().addService(service);
     this.client =
-        new TimeseriesClient(TimeseriesServiceGrpc.newBlockingStub(grpcServerRule.getChannel()));
+        new TimeSeriesClient(TimeSeriesServiceGrpc.newBlockingStub(grpcServerRule.getChannel()));
   }
 
   @Test

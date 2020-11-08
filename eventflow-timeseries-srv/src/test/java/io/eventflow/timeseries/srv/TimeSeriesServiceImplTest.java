@@ -37,8 +37,8 @@ import io.eventflow.timeseries.api.AggregateFunction;
 import io.eventflow.timeseries.api.GetIntervalValuesRequest;
 import io.eventflow.timeseries.api.Granularity;
 import io.eventflow.timeseries.api.IntervalValues;
-import io.eventflow.timeseries.api.TimeseriesClient;
-import io.eventflow.timeseries.api.TimeseriesServiceGrpc;
+import io.eventflow.timeseries.api.TimeSeriesClient;
+import io.eventflow.timeseries.api.TimeSeriesServiceGrpc;
 import io.grpc.testing.GrpcServerRule;
 import java.text.ParseException;
 import java.time.Clock;
@@ -57,22 +57,22 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
-public class TimeseriesServiceImplTest {
+public class TimeSeriesServiceImplTest {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
   @Rule public GrpcServerRule grpcServerRule = new GrpcServerRule();
   @Mock private DatabaseClient spanner;
   @Mock private ReadOnlyTransaction tx;
   @Mock private Clock clock;
   @Mock private RedisCache cache;
-  private TimeseriesClient client;
+  private TimeSeriesClient client;
 
   @Before
   public void setUp() {
     grpcServerRule
         .getServiceRegistry()
-        .addService(new TimeseriesServiceImpl(spanner, cache, Duration.ofDays(1), clock));
+        .addService(new TimeSeriesServiceImpl(spanner, cache, Duration.ofDays(1), clock));
     this.client =
-        new TimeseriesClient(TimeseriesServiceGrpc.newBlockingStub(grpcServerRule.getChannel()));
+        new TimeSeriesClient(TimeSeriesServiceGrpc.newBlockingStub(grpcServerRule.getChannel()));
   }
 
   @Test

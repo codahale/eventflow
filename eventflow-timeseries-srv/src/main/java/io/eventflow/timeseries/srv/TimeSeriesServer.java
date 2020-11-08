@@ -36,13 +36,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisPool;
 
-public class TimeseriesServer {
-  private static final Logger LOGGER = LoggerFactory.getLogger(TimeseriesServer.class);
+public class TimeSeriesServer {
+  private static final Logger LOGGER = LoggerFactory.getLogger(TimeSeriesServer.class);
   private final Server server;
 
-  public TimeseriesServer(DatabaseClient spanner, int port, URI redisUri, Duration minCacheAge) {
+  public TimeSeriesServer(DatabaseClient spanner, int port, URI redisUri, Duration minCacheAge) {
     var cache = new RedisCache(new JedisPool(redisUri));
-    var impl = new TimeseriesServiceImpl(spanner, cache, minCacheAge, Clock.systemUTC());
+    var impl = new TimeSeriesServiceImpl(spanner, cache, minCacheAge, Clock.systemUTC());
     this.server = ServerBuilder.forPort(port).addService(impl).build();
   }
 
@@ -57,7 +57,7 @@ public class TimeseriesServer {
                   // Use stderr here since the logger may have been reset by its JVM shutdown hook.
                   System.err.println("*** shutting down gRPC server since JVM is shutting down");
                   try {
-                    TimeseriesServer.this.stop();
+                    TimeSeriesServer.this.stop();
                   } catch (InterruptedException e) {
                     e.printStackTrace(System.err);
                   }
@@ -90,7 +90,7 @@ public class TimeseriesServer {
       var client =
           spanner.getDatabaseClient(
               DatabaseId.of(spanner.getOptions().getProjectId(), instance, database));
-      var server = new TimeseriesServer(client, port, URI.create(redisUri), minCacheAge);
+      var server = new TimeSeriesServer(client, port, URI.create(redisUri), minCacheAge);
       server.start();
       server.blockUntilShutdown();
     }
@@ -110,7 +110,7 @@ public class TimeseriesServer {
         traceConfig.getActiveTraceParams().toBuilder().setSampler(Samplers.alwaysSample()).build());
 
     RpcViews.registerAllGrpcViews();
-    TimeseriesStats.registerViews();
+    TimeSeriesStats.registerViews();
 
     ZPageHandlers.startHttpServerAndRegisterAll(port + 1);
   }

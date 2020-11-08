@@ -17,8 +17,8 @@ package io.eventflow.timeseries.srv;
 
 import io.eventflow.timeseries.api.AggregateFunction;
 import io.eventflow.timeseries.api.Granularity;
-import io.eventflow.timeseries.api.TimeseriesClient;
-import io.eventflow.timeseries.api.TimeseriesServiceGrpc;
+import io.eventflow.timeseries.api.TimeSeriesClient;
+import io.eventflow.timeseries.api.TimeSeriesServiceGrpc;
 import io.grpc.ManagedChannelBuilder;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -26,9 +26,8 @@ import java.time.ZoneId;
 public class ClientTest {
   public static void main(String[] args) {
     var channel = ManagedChannelBuilder.forAddress("localhost", 8080).usePlaintext().build();
-    var stub = TimeseriesServiceGrpc.newBlockingStub(channel);
-
-    var client = new TimeseriesClient(stub);
+    var stub = TimeSeriesServiceGrpc.newBlockingStub(channel);
+    var client = new TimeSeriesClient(stub);
 
     var start = Instant.parse("2020-10-29T00:00:00Z");
     var end = Instant.parse("2020-11-01T00:00:00Z");

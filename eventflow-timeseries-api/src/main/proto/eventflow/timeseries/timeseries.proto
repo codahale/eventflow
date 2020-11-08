@@ -5,11 +5,11 @@ package eventflow.timeseries;
 import "google/protobuf/timestamp.proto";
 
 option java_package = "io.eventflow.timeseries.api";
-option java_outer_classname = "TimeseriesPB";
+option java_outer_classname = "TimeSeriesPB";
 option java_multiple_files = true;
 
 // A service which provides access to time series data.
-service TimeseriesService {
+service TimeSeriesService {
   // Returns the intervals and values for a time series.
   rpc GetIntervalValues (GetIntervalValuesRequest) returns (IntervalValues) {
   }
