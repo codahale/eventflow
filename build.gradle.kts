@@ -8,8 +8,8 @@ buildscript {
 }
 
 plugins {
-    idea
-    java
+    id("idea")
+    id("java")
     id("com.diffplug.spotless") version "5.7.0"
     id("com.github.ben-manes.versions") version "0.36.0"
     id("com.google.protobuf") version "0.8.13"
