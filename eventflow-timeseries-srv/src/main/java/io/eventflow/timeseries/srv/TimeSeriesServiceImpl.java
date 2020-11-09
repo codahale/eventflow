@@ -15,6 +15,8 @@
  */
 package io.eventflow.timeseries.srv;
 
+import static io.eventflow.timeseries.srv.TimeSeriesStats.recordGetIntervalValuesRequest;
+import static io.eventflow.timeseries.srv.TimeSeriesStats.tracer;
 import static io.opencensus.trace.AttributeValue.booleanAttributeValue;
 
 import com.google.cloud.Timestamp;
@@ -31,23 +33,11 @@ import io.eventflow.timeseries.api.TimeSeries;
 import io.eventflow.timeseries.api.TimeSeriesList;
 import io.eventflow.timeseries.api.TimeSeriesServiceGrpc;
 import io.grpc.stub.StreamObserver;
-import io.opencensus.stats.Stats;
-import io.opencensus.stats.StatsRecorder;
-import io.opencensus.tags.TagMetadata;
-import io.opencensus.tags.Tagger;
-import io.opencensus.tags.Tags;
-import io.opencensus.trace.Tracer;
-import io.opencensus.trace.Tracing;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class TimeSeriesServiceImpl extends TimeSeriesServiceGrpc.TimeSeriesServiceImplBase {
-
-  private static final StatsRecorder stats = Stats.getStatsRecorder();
-  private static final Tracer tracer = Tracing.getTracer();
-  private static final Tagger tagger = Tags.getTagger();
-
   static final TimestampBound STALENESS = TimestampBound.ofExactStaleness(1, TimeUnit.MINUTES);
 
   private final DatabaseClient spanner;
@@ -91,18 +81,8 @@ public class TimeSeriesServiceImpl extends TimeSeriesServiceGrpc.TimeSeriesServi
       GetIntervalValuesRequest request, StreamObserver<IntervalValues> responseObserver) {
     var key = request.toByteArray();
     var cacheable = isCacheable(request);
-    tracer.getCurrentSpan().putAttribute("cacheable", booleanAttributeValue(cacheable));
-    stats
-        .newMeasureMap()
-        .put(TimeSeriesStats.GET_INTERVALS_REQUESTS, 1)
-        .record(
-            tagger
-                .currentBuilder()
-                .put(
-                    TimeSeriesStats.CACHEABILITY,
-                    cacheable ? TimeSeriesStats.CACHEABLE : TimeSeriesStats.UNCACHEABLE,
-                    TagMetadata.create(TagMetadata.TagTtl.UNLIMITED_PROPAGATION))
-                .build());
+    tracer().getCurrentSpan().putAttribute("cacheable", booleanAttributeValue(cacheable));
+    recordGetIntervalValuesRequest(cacheable);
 
     // If the request is cacheable (i.e., it's for intervals which are sufficiently in the past),
     // check the cache for the response.

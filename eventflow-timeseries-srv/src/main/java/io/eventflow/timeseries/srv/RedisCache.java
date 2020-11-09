@@ -15,22 +15,20 @@
  */
 package io.eventflow.timeseries.srv;
 
+import static io.eventflow.timeseries.srv.TimeSeriesStats.recordCacheHit;
+import static io.eventflow.timeseries.srv.TimeSeriesStats.recordCacheMiss;
+import static io.eventflow.timeseries.srv.TimeSeriesStats.recordCacheWrite;
+import static io.eventflow.timeseries.srv.TimeSeriesStats.tracer;
+
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.eventflow.timeseries.api.IntervalValues;
-import io.opencensus.stats.Stats;
-import io.opencensus.stats.StatsRecorder;
 import io.opencensus.trace.AttributeValue;
-import io.opencensus.trace.Tracer;
-import io.opencensus.trace.Tracing;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.params.SetParams;
 
 public class RedisCache {
-
-  private static final StatsRecorder stats = Stats.getStatsRecorder();
-  private static final Tracer tracer = Tracing.getTracer();
   private static final int TTL = (int) TimeUnit.DAYS.toSeconds(1);
   private final JedisPool pool;
 
@@ -40,29 +38,30 @@ public class RedisCache {
 
   @Nullable
   public IntervalValues getIfPresent(byte[] key) {
-    try (var ignored = tracer.spanBuilder("RedisCache.GetIfPresent").startScopedSpan()) {
+    try (var ignored = tracer().spanBuilder("RedisCache.GetIfPresent").startScopedSpan()) {
       try (var jedis = pool.getResource()) {
         var data = jedis.get(key);
         if (data != null) {
           var intervalValues = IntervalValues.parseFrom(data);
-          tracer.getCurrentSpan().putAttribute("hit", AttributeValue.booleanAttributeValue(true));
-          stats.newMeasureMap().put(TimeSeriesStats.CACHE_HIT, 1).record();
+          tracer().getCurrentSpan().putAttribute("hit", AttributeValue.booleanAttributeValue(true));
+          recordCacheHit();
           return intervalValues;
         }
       } catch (InvalidProtocolBufferException e) {
         // If we can't parse it, pretend it doesn't exist.
-        tracer.getCurrentSpan().addAnnotation("invalid protobuf");
+        tracer().getCurrentSpan().addAnnotation("invalid protobuf");
       }
-      stats.newMeasureMap().put(TimeSeriesStats.CACHE_MISS, 1).record();
-      tracer.getCurrentSpan().putAttribute("hit", AttributeValue.booleanAttributeValue(false));
+
+      recordCacheMiss();
+      tracer().getCurrentSpan().putAttribute("hit", AttributeValue.booleanAttributeValue(false));
       return null;
     }
   }
 
   public void put(byte[] key, IntervalValues response) {
-    try (var ignored = tracer.spanBuilder("RedisCache.Put").startScopedSpan()) {
+    try (var ignored = tracer().spanBuilder("RedisCache.Put").startScopedSpan()) {
       try (var jedis = pool.getResource()) {
-        stats.newMeasureMap().put(TimeSeriesStats.CACHE_WRITE, 1).record();
+        recordCacheWrite();
         jedis.set(key, response.toByteArray(), SetParams.setParams().ex(TTL));
       }
     }

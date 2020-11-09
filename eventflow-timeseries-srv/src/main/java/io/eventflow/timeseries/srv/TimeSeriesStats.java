@@ -18,30 +18,39 @@ package io.eventflow.timeseries.srv;
 import io.opencensus.stats.Aggregation;
 import io.opencensus.stats.Measure;
 import io.opencensus.stats.Stats;
+import io.opencensus.stats.StatsRecorder;
 import io.opencensus.stats.View;
 import io.opencensus.tags.TagKey;
+import io.opencensus.tags.TagMetadata;
 import io.opencensus.tags.TagValue;
+import io.opencensus.tags.Tagger;
+import io.opencensus.tags.Tags;
+import io.opencensus.trace.Tracer;
+import io.opencensus.trace.Tracing;
 import java.util.List;
 
 public class TimeSeriesStats {
+  private static final StatsRecorder stats = Stats.getStatsRecorder();
+  private static final Tracer tracer = Tracing.getTracer();
+  private static final Tagger tagger = Tags.getTagger();
 
-  static final Measure.MeasureLong CACHE_HIT =
+  private static final Measure.MeasureLong CACHE_HIT =
       Measure.MeasureLong.create(
           "io.eventflow/timeseries/srv/cache_hits", "Number of cache hits", "1");
-  static final Measure.MeasureLong CACHE_MISS =
+  private static final Measure.MeasureLong CACHE_MISS =
       Measure.MeasureLong.create(
           "io.eventflow/timeseries/srv/cache_miss", "Number of cache misses", "1");
-  static final Measure.MeasureLong CACHE_WRITE =
+  private static final Measure.MeasureLong CACHE_WRITE =
       Measure.MeasureLong.create(
           "io.eventflow/timeseries/srv/cache_writes", "Number of cache writes", "1");
-  static final Measure.MeasureLong GET_INTERVALS_REQUESTS =
+  private static final Measure.MeasureLong GET_INTERVALS_REQUESTS =
       Measure.MeasureLong.create(
           "io.eventflow/timeseries/srv/get_intervals_requests",
           "Number of requests for getIntervals",
           "1");
-  static final TagKey CACHEABILITY = TagKey.create("cacheability");
-  static final TagValue CACHEABLE = TagValue.create("cacheable");
-  static final TagValue UNCACHEABLE = TagValue.create("uncacheable");
+  private static final TagKey CACHEABILITY = TagKey.create("cacheability");
+  private static final TagValue CACHEABLE = TagValue.create("cacheable");
+  private static final TagValue UNCACHEABLE = TagValue.create("uncacheable");
 
   private static final List<View> VIEWS =
       List.of(
@@ -74,7 +83,37 @@ public class TimeSeriesStats {
     // singleton
   }
 
-  public static void registerViews() {
+  static void registerViews() {
     VIEWS.forEach(Stats.getViewManager()::registerView);
+  }
+
+  static void recordGetIntervalValuesRequest(boolean cacheable) {
+    stats
+        .newMeasureMap()
+        .put(TimeSeriesStats.GET_INTERVALS_REQUESTS, 1)
+        .record(
+            tagger
+                .currentBuilder()
+                .put(
+                    TimeSeriesStats.CACHEABILITY,
+                    cacheable ? TimeSeriesStats.CACHEABLE : TimeSeriesStats.UNCACHEABLE,
+                    TagMetadata.create(TagMetadata.TagTtl.UNLIMITED_PROPAGATION))
+                .build());
+  }
+
+  static void recordCacheMiss() {
+    stats.newMeasureMap().put(CACHE_MISS, 1).record();
+  }
+
+  static void recordCacheHit() {
+    stats.newMeasureMap().put(CACHE_HIT, 1).record();
+  }
+
+  static void recordCacheWrite() {
+    stats.newMeasureMap().put(CACHE_WRITE, 1).record();
+  }
+
+  static Tracer tracer() {
+    return tracer;
   }
 }
