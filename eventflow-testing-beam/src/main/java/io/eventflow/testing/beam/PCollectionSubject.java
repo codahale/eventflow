@@ -15,20 +15,29 @@
  */
 package io.eventflow.testing.beam;
 
+import static com.google.common.truth.Truth.assertAbout;
+
+import com.google.common.truth.FailureMetadata;
+import com.google.common.truth.Subject;
 import java.io.Serializable;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.values.PCollection;
 
-public class PCollectionAssert<T> {
-  private final PCollection<T> actual;
-
-  private PCollectionAssert(PCollection<T> actual) {
-    this.actual = actual;
+public class PCollectionSubject<T> extends Subject {
+  public static <T> Subject.Factory<PCollectionSubject<T>, PCollection<T>> pCollections() {
+    return PCollectionSubject::new;
   }
 
-  public static <T> PCollectionAssert<T> assertThat(PCollection<T> actual) {
-    return new PCollectionAssert<>(actual);
+  public static <T> PCollectionSubject<T> assertThat(PCollection<T> actual) {
+    return assertAbout(PCollectionSubject.<T>pCollections()).that(actual);
+  }
+
+  private final PCollection<T> actual;
+
+  private PCollectionSubject(FailureMetadata metadata, PCollection<T> actual) {
+    super(metadata, actual);
+    this.actual = actual;
   }
 
   public void isEmpty() {

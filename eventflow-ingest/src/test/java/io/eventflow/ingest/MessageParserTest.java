@@ -15,7 +15,7 @@
  */
 package io.eventflow.ingest;
 
-import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
+import static io.eventflow.testing.beam.PCollectionSubject.assertThat;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;

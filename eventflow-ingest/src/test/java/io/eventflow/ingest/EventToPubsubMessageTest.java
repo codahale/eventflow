@@ -16,7 +16,7 @@
 package io.eventflow.ingest;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
+import static io.eventflow.testing.beam.PCollectionSubject.assertThat;
 
 import com.google.protobuf.StringValue;
 import com.google.protobuf.util.Timestamps;

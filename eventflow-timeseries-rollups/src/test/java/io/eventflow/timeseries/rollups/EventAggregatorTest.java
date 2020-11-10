@@ -15,7 +15,7 @@
  */
 package io.eventflow.timeseries.rollups;
 
-import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
+import static io.eventflow.testing.beam.PCollectionSubject.assertThat;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.spanner.Mutation;
