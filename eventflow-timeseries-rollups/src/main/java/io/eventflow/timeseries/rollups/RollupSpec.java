@@ -55,12 +55,16 @@ public class RollupSpec implements Serializable {
         throw new IllegalArgumentException("bad rollup: " + parts.get(1));
       }
 
-      if (matcher.group(1).equals(RollupSpec.MIN.getId())) {
-        builder.put(parts.get(0), KV.of(matcher.group(2), RollupSpec.MIN));
-      } else if (matcher.group(1).equals(RollupSpec.MAX.getId())) {
-        builder.put(parts.get(0), KV.of(matcher.group(2), RollupSpec.MAX));
+      var eventType = parts.get(0);
+      var aggregateFunction = matcher.group(1);
+      var attributeName = matcher.group(2);
+
+      if (aggregateFunction.equals(RollupSpec.MIN.getId())) {
+        builder.put(eventType, KV.of(attributeName, RollupSpec.MIN));
+      } else if (aggregateFunction.equals(RollupSpec.MAX.getId())) {
+        builder.put(eventType, KV.of(attributeName, RollupSpec.MAX));
       } else {
-        builder.put(parts.get(0), KV.of(matcher.group(2), RollupSpec.SUM));
+        builder.put(eventType, KV.of(attributeName, RollupSpec.SUM));
       }
     }
 
