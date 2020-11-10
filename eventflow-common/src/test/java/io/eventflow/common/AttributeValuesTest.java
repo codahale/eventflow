@@ -41,6 +41,7 @@ public class AttributeValuesTest {
   @Test
   public void floatValue() {
     assertThat(AttributeValues.floatValue(100.1))
+        .usingDoubleTolerance(1e-10)
         .isEqualTo(AttributeValue.newBuilder().setFloatValue(100.1).build());
   }
 

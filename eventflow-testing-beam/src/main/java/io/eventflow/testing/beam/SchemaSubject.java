@@ -19,9 +19,9 @@ import static com.google.common.truth.Truth.assertAbout;
 
 import com.google.common.truth.FailureMetadata;
 import com.google.common.truth.Subject;
-import com.google.common.truth.Truth;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileWriter;
@@ -29,7 +29,6 @@ import org.apache.avro.file.SeekableByteArrayInput;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class SchemaSubject extends Subject {
   public static Subject.Factory<SchemaSubject, Schema> schemas() {
@@ -58,7 +57,8 @@ public class SchemaSubject extends Subject {
     var dReader = new GenericDatumReader<GenericRecord>(actual);
     var in = new SeekableByteArrayInput(out.toByteArray());
     try (var fReader = new DataFileReader<>(in, dReader)) {
-      fReader.forEachRemaining(r -> Truth.assertThat(r).isEqualTo(record));
+      fReader.forEachRemaining(
+          r -> check("deserialize(schema.serialize(record))").that(r).isEqualTo(record));
     }
   }
 }
