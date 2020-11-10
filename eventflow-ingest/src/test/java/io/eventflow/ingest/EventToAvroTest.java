@@ -15,13 +15,14 @@
  */
 package io.eventflow.ingest;
 
-import static io.eventflow.testing.beam.SchemaAssert.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.google.common.truth.Truth.assertThat;
+import static io.eventflow.testing.beam.SchemaSubject.assertThat;
 
 import com.google.protobuf.StringValue;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.AttributeValues;
 import io.eventflow.common.pb.Event;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import org.apache.avro.Schema;
@@ -39,7 +40,7 @@ public class EventToAvroTest {
   }
 
   @Test
-  public void eventWithCustomer() {
+  public void eventWithCustomer() throws IOException {
     var event =
         Event.newBuilder()
             .setId("id")
@@ -65,7 +66,7 @@ public class EventToAvroTest {
   }
 
   @Test
-  public void eventWithoutCustomer() {
+  public void eventWithoutCustomer() throws IOException {
     var event =
         Event.newBuilder()
             .setId("id")

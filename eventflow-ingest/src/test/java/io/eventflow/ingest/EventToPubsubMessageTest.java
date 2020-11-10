@@ -15,13 +15,12 @@
  */
 package io.eventflow.ingest;
 
+import static com.google.common.truth.Truth.assertThat;
 import static io.eventflow.testing.beam.PCollectionAssert.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.protobuf.StringValue;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.pb.Event;
-import io.eventflow.testing.ProtobufAssert;
 import java.util.HashMap;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesAndMessageIdCoder;
@@ -66,9 +65,7 @@ public class EventToPubsubMessageTest {
         .allSatisfy(
             msg -> {
               assertThat(msg.getAttributeMap()).isEqualTo(attributes);
-              assertThat(ProtobufAssert.assertThat(Event::parseFrom))
-                  .canParse(msg.getPayload())
-                  .isEqualTo(event);
+              assertThat(Event.parseFrom(msg.getPayload())).isEqualTo(event);
             });
 
     pipeline.run();
@@ -95,9 +92,7 @@ public class EventToPubsubMessageTest {
         .allSatisfy(
             msg -> {
               assertThat(msg.getAttributeMap()).isEqualTo(attributes);
-              assertThat(ProtobufAssert.assertThat(Event::parseFrom))
-                  .canParse(msg.getPayload())
-                  .isEqualTo(event);
+              assertThat(Event.parseFrom(msg.getPayload())).isEqualTo(event);
             });
 
     pipeline.run();

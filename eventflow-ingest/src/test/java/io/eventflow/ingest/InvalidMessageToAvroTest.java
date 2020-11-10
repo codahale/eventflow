@@ -15,13 +15,14 @@
  */
 package io.eventflow.ingest;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.google.common.truth.Truth.assertThat;
+import static io.eventflow.testing.beam.SchemaSubject.assertThat;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.pb.Event;
 import io.eventflow.ingest.pb.InvalidMessage;
-import io.eventflow.testing.beam.SchemaAssert;
+import java.io.IOException;
 import org.apache.avro.Schema;
 import org.apache.beam.sdk.io.gcp.bigquery.AvroWriteRequest;
 import org.junit.Before;
@@ -37,7 +38,7 @@ public class InvalidMessageToAvroTest {
   }
 
   @Test
-  public void invalidMessageWithoutEventOrAttributes() {
+  public void invalidMessageWithoutEventOrAttributes() throws IOException {
     var message =
         InvalidMessage.newBuilder()
             .setMessageId("12345")
@@ -50,11 +51,11 @@ public class InvalidMessageToAvroTest {
     assertThat(row.toString())
         .isEqualTo(
             "{\"message_id\": \"12345\", \"message_data\": {\"bytes\": \"ok\"}, \"message_attributes\": [], \"received_at\": 123456000000, \"error\": \"bad vibes\", \"event\": null}");
-    SchemaAssert.assertThat(schema).canReadAndWrite(row);
+    assertThat(schema).canReadAndWrite(row);
   }
 
   @Test
-  public void invalidMessageWithoutEvent() {
+  public void invalidMessageWithoutEvent() throws IOException {
     var message =
         InvalidMessage.newBuilder()
             .setMessageId("12345")
@@ -68,11 +69,11 @@ public class InvalidMessageToAvroTest {
     assertThat(row.toString())
         .isEqualTo(
             "{\"message_id\": \"12345\", \"message_data\": {\"bytes\": \"ok\"}, \"message_attributes\": [{\"key\": \"event.id\", \"value\": \"test\"}], \"received_at\": 123456000000, \"error\": \"bad vibes\", \"event\": null}");
-    SchemaAssert.assertThat(schema).canReadAndWrite(row);
+    assertThat(schema).canReadAndWrite(row);
   }
 
   @Test
-  public void invalidMessage() {
+  public void invalidMessage() throws IOException {
     var message =
         InvalidMessage.newBuilder()
             .setMessageId("12345")
@@ -87,6 +88,6 @@ public class InvalidMessageToAvroTest {
     assertThat(row.toString())
         .isEqualTo(
             "{\"message_id\": \"12345\", \"message_data\": {\"bytes\": \"ok\"}, \"message_attributes\": [{\"key\": \"event.id\", \"value\": \"test\"}], \"received_at\": 123456000000, \"error\": \"bad vibes\", \"event\": \"id: \\\"test\\\"\"}");
-    SchemaAssert.assertThat(schema).canReadAndWrite(row);
+    assertThat(schema).canReadAndWrite(row);
   }
 }

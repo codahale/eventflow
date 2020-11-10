@@ -15,7 +15,7 @@
  */
 package io.eventflow.timeseries.rollups;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.google.common.truth.Truth.assertThat;
 
 import org.apache.beam.sdk.values.KV;
 import org.junit.Test;
@@ -27,7 +27,7 @@ public class RollupSpecTest {
   @Test
   public void rollupsByEventType() {
     assertThat(spec.rollups("event_type"))
-        .containsOnly(KV.of("attr", RollupSpec.SUM), KV.of("attr", RollupSpec.MIN));
-    assertThat(spec.rollups("event_type2")).containsOnly(KV.of("attr2", RollupSpec.MAX));
+        .containsExactly(KV.of("attr", RollupSpec.SUM), KV.of("attr", RollupSpec.MIN));
+    assertThat(spec.rollups("event_type2")).containsExactly(KV.of("attr2", RollupSpec.MAX));
   }
 }

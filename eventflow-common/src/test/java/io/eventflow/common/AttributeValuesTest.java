@@ -15,7 +15,7 @@
  */
 package io.eventflow.common;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.google.common.truth.extensions.proto.ProtoTruth.assertThat;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
