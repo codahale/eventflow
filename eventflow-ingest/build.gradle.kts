@@ -14,7 +14,7 @@ distZip.enabled = false
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:[0,99]"
+        artifact = "com.google.protobuf:protoc:3.+"
     }
 }
 
