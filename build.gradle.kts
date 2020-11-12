@@ -105,7 +105,9 @@ allprojects {
      * limitations under the License.
      */
 """.trimIndent())
+
             googleJavaFormat("1.9")
+
             target(project.fileTree(project.projectDir) {
                 include("**/*.java")
                 exclude("**/build/**")
