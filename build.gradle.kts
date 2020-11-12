@@ -50,6 +50,7 @@ allprojects {
             imports {
                 mavenBom("com.fasterxml.jackson:jackson-bom:2.11.3")
                 mavenBom("com.google.cloud:google-cloud-bom:0.143.0")
+                mavenBom("com.google.guava:guava-bom:30.0-jre")
                 mavenBom("com.google.protobuf:protobuf-bom:3.13.0")
                 mavenBom("io.grpc:grpc-bom:1.33.1")
                 mavenBom("org.apache.beam:beam-sdks-java-bom:2.25.0")
