@@ -1,5 +1,3 @@
-import io.eventflow.Versions
-
 plugins {
     id("application")
     id("com.google.cloud.tools.jib") version "2.6.0"
@@ -15,29 +13,29 @@ distZip.enabled = false
 dependencies {
     implementation(project(":eventflow-timeseries-api"))
 
-    implementation("com.google.protobuf:protobuf-java:${Versions.PROTOBUF}")
-    implementation("com.google.protobuf:protobuf-java-util:${Versions.PROTOBUF}")
+    implementation("com.google.protobuf:protobuf-java")
+    implementation("com.google.protobuf:protobuf-java-util")
 
-    implementation("io.grpc:grpc-netty-shaded:${Versions.GRPC}")
-    implementation("io.grpc:grpc-protobuf:${Versions.GRPC}")
-    implementation("io.grpc:grpc-stub:${Versions.GRPC}")
-    implementation("io.grpc:grpc-census:${Versions.GRPC}")
+    implementation("io.grpc:grpc-netty-shaded")
+    implementation("io.grpc:grpc-protobuf")
+    implementation("io.grpc:grpc-stub")
+    implementation("io.grpc:grpc-census")
 
-    implementation("io.opencensus:opencensus-api:${Versions.OPEN_CENSUS}")
-    implementation("io.opencensus:opencensus-contrib-grpc-metrics:${Versions.OPEN_CENSUS}")
-    implementation("io.opencensus:opencensus-impl:${Versions.OPEN_CENSUS}")
-    implementation("io.opencensus:opencensus-contrib-zpages:${Versions.OPEN_CENSUS}")
-    implementation("io.opencensus:opencensus-contrib-log-correlation-log4j2:${Versions.OPEN_CENSUS}")
+    implementation("io.opencensus:opencensus-api")
+    implementation("io.opencensus:opencensus-contrib-grpc-metrics")
+    implementation("io.opencensus:opencensus-impl")
+    implementation("io.opencensus:opencensus-contrib-zpages")
+    implementation("io.opencensus:opencensus-contrib-log-correlation-log4j2")
 
-    implementation("org.apache.logging.log4j:log4j-api:${Versions.LOG4J}")
-    implementation("org.apache.logging.log4j:log4j-core:${Versions.LOG4J}")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:${Versions.LOG4J}")
+    implementation("org.apache.logging.log4j:log4j-api")
+    implementation("org.apache.logging.log4j:log4j-core")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl")
     implementation("com.vlkan.log4j2:log4j2-logstash-layout:1.0.5")
 
     implementation("com.google.cloud:google-cloud-spanner:3.0.1")
     implementation("redis.clients:jedis:3.3.0")
 
-    testImplementation("io.grpc:grpc-testing:${Versions.GRPC}")
+    testImplementation("io.grpc:grpc-testing")
 }
 
 application {

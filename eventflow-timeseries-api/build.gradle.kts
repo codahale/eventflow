@@ -4,7 +4,6 @@ import com.google.protobuf.gradle.ofSourceSet
 import com.google.protobuf.gradle.plugins
 import com.google.protobuf.gradle.protobuf
 import com.google.protobuf.gradle.protoc
-import io.eventflow.Versions
 
 plugins {
     id("java-library")
@@ -13,12 +12,12 @@ plugins {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:${Versions.PROTOBUF}"
+        artifact = "com.google.protobuf:protoc:[0,99]"
     }
 
     plugins {
         id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:${Versions.GRPC}"
+            artifact = "io.grpc:protoc-gen-grpc-java:[0,99]"
         }
     }
 
@@ -32,13 +31,13 @@ protobuf {
 }
 
 dependencies {
-    api("com.google.protobuf:protobuf-java:${Versions.PROTOBUF}")
-    api("com.google.protobuf:protobuf-java-util:${Versions.PROTOBUF}")
-    api("io.grpc:grpc-protobuf:${Versions.GRPC}")
-    api("io.grpc:grpc-stub:${Versions.GRPC}")
-    api("io.opencensus:opencensus-api:${Versions.OPEN_CENSUS}")
+    api("com.google.protobuf:protobuf-java")
+    api("com.google.protobuf:protobuf-java-util")
+    api("io.grpc:grpc-protobuf")
+    api("io.grpc:grpc-stub")
+    api("io.opencensus:opencensus-api")
 
     compileOnly("javax.annotation:javax.annotation-api:1.3.2")
 
-    testImplementation("io.grpc:grpc-testing:${Versions.GRPC}")
+    testImplementation("io.grpc:grpc-testing")
 }

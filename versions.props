@@ -1,0 +1,10 @@
+com.fasterxml.jackson.core:*=2.11.3
+com.google.guava:guava=30.0-jre
+com.google.protobuf:*=3.13.0
+com.google.truth.*:*=1.1
+com.google.truth:*=1.1
+io.grpc:*=1.33.1
+io.opencensus:*=0.24.0
+org.apache.beam:*=2.25.0
+org.apache.logging.log4j:*=2.14.0
+org.slf4j:*=1.7.30

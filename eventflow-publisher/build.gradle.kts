@@ -1,12 +1,10 @@
-import io.eventflow.Versions
-
 plugins {
     id("java-library")
 }
 
 dependencies {
     api(project(":eventflow-common"))
-    api("com.google.protobuf:protobuf-java:${Versions.PROTOBUF}")
-    api("com.google.protobuf:protobuf-java-util:${Versions.PROTOBUF}")
+    api("com.google.protobuf:protobuf-java")
+    api("com.google.protobuf:protobuf-java-util")
     api("com.google.cloud:google-cloud-pubsub:1.108.7")
 }

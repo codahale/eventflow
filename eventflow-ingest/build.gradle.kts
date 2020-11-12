@@ -1,6 +1,5 @@
 import com.google.protobuf.gradle.protobuf
 import com.google.protobuf.gradle.protoc
-import io.eventflow.Versions
 
 plugins {
     id("application")
@@ -15,19 +14,19 @@ distZip.enabled = false
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:${Versions.PROTOBUF}"
+        artifact = "com.google.protobuf:protoc:[0,99]"
     }
 }
 
 dependencies {
     implementation(project(":eventflow-common"))
-    implementation("org.apache.beam:beam-runners-direct-java:${Versions.BEAM}")
-    implementation("org.apache.beam:beam-runners-google-cloud-dataflow-java:${Versions.BEAM}")
-    implementation("org.apache.beam:beam-sdks-java-io-google-cloud-platform:${Versions.BEAM}")
-    implementation("org.apache.beam:beam-sdks-java-extensions-protobuf:${Versions.BEAM}")
-    implementation("org.slf4j:slf4j-jdk14:${Versions.SLF4J}")
-    implementation("com.google.protobuf:protobuf-java:${Versions.PROTOBUF}")
-    implementation("com.google.protobuf:protobuf-java-util:${Versions.PROTOBUF}")
+    implementation("org.apache.beam:beam-runners-direct-java")
+    implementation("org.apache.beam:beam-runners-google-cloud-dataflow-java")
+    implementation("org.apache.beam:beam-sdks-java-io-google-cloud-platform")
+    implementation("org.apache.beam:beam-sdks-java-extensions-protobuf")
+    implementation("org.slf4j:slf4j-jdk14")
+    implementation("com.google.protobuf:protobuf-java")
+    implementation("com.google.protobuf:protobuf-java-util")
 
     testImplementation(project(":eventflow-testing-beam"))
 }
