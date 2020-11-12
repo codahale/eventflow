@@ -16,7 +16,7 @@ dependencies {
     implementation("com.google.protobuf:protobuf-java")
     implementation("com.google.protobuf:protobuf-java-util")
 
-    implementation("io.grpc:grpc-netty-shaded")
+    implementation("io.grpc:grpc-netty")
     implementation("io.grpc:grpc-protobuf")
     implementation("io.grpc:grpc-stub")
     implementation("io.grpc:grpc-census")
