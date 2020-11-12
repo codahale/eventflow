@@ -10,8 +10,9 @@ plugins {
     id("idea")
     id("java")
     id("com.diffplug.spotless") version "5.7.0"
+    id("com.github.ben-manes.versions") version "0.36.0"
     id("com.google.protobuf") version "0.8.13"
-    id("com.palantir.consistent-versions") version "1.27.0"
+    id("io.spring.dependency-management") version "1.0.10.RELEASE"
     id("net.ltgt.errorprone") version "1.3.0"
 }
 
@@ -20,9 +21,41 @@ allprojects {
     apply(plugin = "java")
     apply(plugin = "com.diffplug.spotless")
     apply(plugin = "net.ltgt.errorprone")
+    apply(plugin = "io.spring.dependency-management")
 
     repositories {
         mavenCentral()
+    }
+
+    dependencyManagement {
+        dependencies {
+            dependencySet("org.slf4j:1.7.30") {
+                entry("slf4j-api")
+                entry("slf4j-jdk14")
+            }
+
+            dependency("com.google.protobuf:protoc:3.13.0")
+
+            dependency("com.google.truth:truth:1.1")
+            dependency("com.google.truth.extensions:truth-proto-extension:1.1")
+
+            dependencySet("io.opencensus:0.24.0") {
+                entry("opencensus-api")
+                entry("opencensus-contrib-grpc-metrics")
+                entry("opencensus-contrib-log-correlation-log4j2")
+                entry("opencensus-contrib-zpages")
+                entry("opencensus-impl")
+            }
+
+            imports {
+                mavenBom("com.fasterxml.jackson:jackson-bom:2.11.3")
+                mavenBom("com.google.cloud:google-cloud-bom:0.143.0")
+                mavenBom("com.google.protobuf:protobuf-bom:3.13.0")
+                mavenBom("io.grpc:grpc-bom:1.33.1")
+                mavenBom("org.apache.beam:beam-sdks-java-bom:2.25.0")
+                mavenBom("org.apache.logging.log4j:log4j-bom:2.14.0")
+            }
+        }
     }
 
     dependencies {

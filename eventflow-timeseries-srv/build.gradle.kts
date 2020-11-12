@@ -32,7 +32,7 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-slf4j-impl")
     implementation("com.vlkan.log4j2:log4j2-logstash-layout:1.0.5")
 
-    implementation("com.google.cloud:google-cloud-spanner:3.0.1")
+    implementation("com.google.cloud:google-cloud-spanner")
     implementation("redis.clients:jedis:3.3.0")
 
     testImplementation("io.grpc:grpc-testing")

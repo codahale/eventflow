@@ -12,12 +12,12 @@ plugins {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.+"
+        artifact = "com.google.protobuf:protoc"
     }
 
     plugins {
         id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.+"
+            artifact = "io.grpc:protoc-gen-grpc-java"
         }
     }
 
