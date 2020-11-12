@@ -34,6 +34,7 @@ allprojects {
                 entry("slf4j-jdk14")
             }
 
+            dependency("junit:junit:4.13.1")
             dependency("com.google.protobuf:protoc:3.13.0")
 
             dependency("com.google.truth:truth:1.1")

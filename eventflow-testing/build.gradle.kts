@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    api("junit:junit:4.13.1")
+    api("junit:junit")
     api("org.mockito:mockito-core:3.6.0")
     api("com.google.protobuf:protobuf-java")
     api("com.google.protobuf:protobuf-java-util")
