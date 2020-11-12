@@ -1,4 +1,3 @@
-import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import net.ltgt.gradle.errorprone.errorprone
 
 buildscript {
@@ -11,30 +10,9 @@ plugins {
     id("idea")
     id("java")
     id("com.diffplug.spotless") version "5.7.0"
-    id("com.github.ben-manes.versions") version "0.36.0"
     id("com.google.protobuf") version "0.8.13"
     id("com.palantir.consistent-versions") version "1.27.0"
     id("net.ltgt.errorprone") version "1.3.0"
-}
-
-fun isNonStable(version: String): Boolean {
-    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
-    val regex = "^[0-9,.v-]+(-r)?$".toRegex()
-    val isStable = stableKeyword || regex.matches(version)
-    return isStable.not()
-}
-
-// Ignore all updates to OpenCensus, since it's tightly coupled to gRPC. When there's a new gRPC
-// version, make sure OpenCensus gets upgraded too.
-fun isNewOpenCensus(candidate: ModuleComponentIdentifier, currentVersion: String): Boolean {
-    return (candidate.group == "io.opencensus" && candidate.version != currentVersion)
-}
-
-tasks.named("dependencyUpdates", DependencyUpdatesTask::class.java).configure {
-    revision = "release"
-    rejectVersionIf {
-        isNonStable(candidate.version) || isNewOpenCensus(candidate, currentVersion)
-    }
 }
 
 allprojects {
