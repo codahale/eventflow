@@ -328,6 +328,16 @@
             </format>
           </formats>
         </configuration>
+        <!-- Check the formatting of everythig on compile. -->
+        <executions>
+          <execution>
+            <id>spotless-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>compile</phase>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
