@@ -31,13 +31,20 @@ import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.values.TupleTag;
 
+/**
+ * Parses incoming Pub/Sub messages. If they parse as Events, outputs the parsed Event object with
+ * the VALID tag. Otherwise, outputs an InvalidMessage object with the INVALID tag.
+ */
 public class MessageParser extends DoFn<PubsubMessage, Event> {
   private static final long serialVersionUID = -3444251307350466926L;
 
+  /** Used to tag valid Event objects. */
   static final TupleTag<Event> VALID =
       new TupleTag<>() {
         private static final long serialVersionUID = 6993653980433915514L;
       };
+
+  /** Used to tag InvalidMessage objects. */
   static final TupleTag<InvalidMessage> INVALID =
       new TupleTag<>() {
         private static final long serialVersionUID = -8091864608888047813L;
@@ -51,69 +58,71 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
 
   @ProcessElement
   public void processElement(ProcessContext c) {
-    var instant = clock.instant();
     var message = c.element();
+
+    // First, we try parsing the message's data as an Event, either in protobuf or JSON.
     var event = parse(message.getPayload());
     if (event == null) {
-      c.output(
-          INVALID,
-          InvalidMessage.newBuilder()
-              .setMessageId(message.getMessageId())
-              .putAllMessageAttributes(message.getAttributeMap())
-              .setMessageData(ByteString.copyFrom(message.getPayload()))
-              .setReceivedAt(
-                  com.google.protobuf.Timestamp.newBuilder()
-                      .setSeconds(instant.getEpochSecond())
-                      .setNanos(instant.getNano()))
-              .setError("invalid protobuf")
-              .build());
+      /// If that's unsuccessful, we output an InvalidMessage and bail.
+      c.output(INVALID, invalidMessage(message).setError("invalid protobuf").build());
       return;
     }
 
+    // Second, we validate the event.
     var error = validateEvent(event, message);
     if (error != null) {
-      c.output(
-          INVALID,
-          InvalidMessage.newBuilder()
-              .setMessageId(message.getMessageId())
-              .putAllMessageAttributes(message.getAttributeMap())
-              .setMessageData(ByteString.copyFrom(message.getPayload()))
-              .setReceivedAt(
-                  com.google.protobuf.Timestamp.newBuilder()
-                      .setSeconds(instant.getEpochSecond())
-                      .setNanos(instant.getNano()))
-              .setError(error)
-              .setEvent(event)
-              .build());
+      // If there is a problem with the event, we output an InvalidMessage and bail.
+      c.output(INVALID, invalidMessage(message).setError(error).setEvent(event).build());
       return;
     }
 
+    // Third, we output the valid event.
     c.output(VALID, event);
+  }
+
+  private InvalidMessage.Builder invalidMessage(PubsubMessage message) {
+    var instant = clock.instant();
+    return InvalidMessage.newBuilder()
+        .setMessageId(message.getMessageId())
+        .putAllMessageAttributes(message.getAttributeMap())
+        .setMessageData(ByteString.copyFrom(message.getPayload()))
+        .setReceivedAt(
+            com.google.protobuf.Timestamp.newBuilder()
+                .setSeconds(instant.getEpochSecond())
+                .setNanos(instant.getNano()));
   }
 
   @Nullable
   private String validateEvent(Event event, PubsubMessage message) {
+    // All events must have an ID. Otherwise, downstream systems can't disambiguate between
+    // duplicate events and events with common properties.
     if (event.getId().isBlank()) {
       return "blank event id";
     }
 
+    // All events must be published in Pub/Sub messages with the event ID in the ID attribute.
+    // Otherwise, Dataflow can't deduplicate the messages it receives by the events they contain.
     var idAttribute = message.getAttribute(Constants.ID_ATTRIBUTE);
     if (!event.getId().equals(idAttribute)) {
       return "event id/attribute mismatch";
     }
 
+    // All events must have an event type. The event type disambiguates attribute semantics.
     if (event.getType().isBlank()) {
       return "blank event type";
     }
 
+    // All events must have an event source.
     if (event.getSource().isBlank()) {
       return "blank event source";
     }
 
+    // All events must have a vaid timestamp.
     if (!event.hasTimestamp() || !Timestamps.isValid(event.getTimestamp())) {
       return "invalid event timestamp";
     }
 
+    // All events must have at least one attribute.
     if (event.getAttributesCount() == 0) {
       return "no event attributes";
     }
@@ -122,14 +131,17 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
       var key = attribute.getKey();
       var value = attribute.getValue();
 
+      // All event attributes must have keys.
       if (key.isBlank()) {
         return "blank attribute key";
       }
 
+      // All event attributes must have values.
       if (value.getValueCase() == AttributeValue.ValueCase.VALUE_NOT_SET) {
         return "blank value for attribute " + key;
       }
 
+      // All timestamp attribute values must be valid.
       if (value.getValueCase() == AttributeValue.ValueCase.TIMESTAMP_VALUE
           && !Timestamps.isValid(value.getTimestampValue())) {
         return "invalid timestamp value for attribute " + key;
@@ -141,19 +153,21 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
 
   @Nullable
   private Event parse(byte[] payload) {
+    // First, we try parsing the payload as a binary protobuf.
     try {
-      // First, we try parsing the payload as a binary protobuf.
       return Event.parseFrom(payload);
-    } catch (InvalidProtocolBufferException e) {
-      try {
-        // If this fails, we try parsing the payload as JSON.
-        var builder = Event.newBuilder();
-        JsonFormat.parser().merge(new String(payload, Charsets.UTF_8), builder);
-        return builder.build();
-      } catch (InvalidProtocolBufferException e2) {
-        // If we can't parse it as either protobuf or JSON, then oh well.
-        return null;
-      }
+    } catch (InvalidProtocolBufferException ignored) {
     }
+
+    // If this fails, we try parsing the payload as JSON.
+    try {
+      var builder = Event.newBuilder();
+      JsonFormat.parser().merge(new String(payload, Charsets.UTF_8), builder);
+      return builder.build();
+    } catch (InvalidProtocolBufferException ignored) {
+    }
+
+    // If we can't parse it as either protobuf or JSON, then oh well.
+    return null;
   }
 }
