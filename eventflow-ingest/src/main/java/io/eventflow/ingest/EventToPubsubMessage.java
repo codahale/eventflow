@@ -22,6 +22,7 @@ import java.util.HashMap;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.transforms.DoFn;
 
+/** Converts Event objects to Pub/Sub messages, including event properties as message attributes. */
 public class EventToPubsubMessage extends DoFn<Event, PubsubMessage> {
   private static final long serialVersionUID = 6311079205948964090L;
 
@@ -38,6 +39,8 @@ public class EventToPubsubMessage extends DoFn<Event, PubsubMessage> {
       attributes.put(Constants.CUSTOMER_ATTRIBUTE, event.getCustomer().getValue());
     }
 
+    // Include an empty string as the message ID because if Beam is configured with
+    // PubsubMessageWithAttributesAndMessageIdCoder, it'll throw an exception on null message IDs.
     c.output(new PubsubMessage(event.toByteArray(), attributes, ""));
   }
 }
