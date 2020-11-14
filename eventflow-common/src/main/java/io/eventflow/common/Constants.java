@@ -15,11 +15,22 @@
  */
 package io.eventflow.common;
 
+/** Common constants shared between eventflow modules. */
 public class Constants {
+
+  /** The name of the Pub/Sub message attribute containing the event ID. */
   public static final String ID_ATTRIBUTE = "event.id";
+
+  /** The name of the Pub/Sub message attribute containing the event timestamp. */
   public static final String TIMESTAMP_ATTRIBUTE = "event.timestamp";
+
+  /** The name of the Pub/Sub message attribute containing the event type. */
   public static final String TYPE_ATTRIBUTE = "event.type";
+
+  /** The name of the Pub/Sub message attribute containing the event source. */
   public static final String SOURCE_ATTRIBUTE = "event.source";
+
+  /** The name of the Pub/Sub message attribute containing the event customer, if any. */
   public static final String CUSTOMER_ATTRIBUTE = "event.customer";
 
   private Constants() {

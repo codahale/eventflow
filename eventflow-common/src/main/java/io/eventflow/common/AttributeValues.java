@@ -22,6 +22,7 @@ import io.eventflow.common.pb.AttributeValue;
 import java.time.Duration;
 import java.time.Instant;
 
+/** Helper methods for constructing attribute values. */
 public class AttributeValues {
   private AttributeValues() {
     // singleton
