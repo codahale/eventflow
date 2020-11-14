@@ -18,13 +18,13 @@ package io.eventflow.ingest;
 import com.google.protobuf.TextFormat;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.ingest.pb.InvalidMessage;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.beam.sdk.io.gcp.bigquery.AvroWriteRequest;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 
+/** Converts InvalidMessage objects to Avro records capable of being read by BigQuery */
 public class InvalidMessageToAvro
     implements SerializableFunction<AvroWriteRequest<InvalidMessage>, GenericRecord> {
 
@@ -32,22 +32,23 @@ public class InvalidMessageToAvro
 
   @Override
   public GenericRecord apply(AvroWriteRequest<InvalidMessage> input) {
+    var schema = input.getSchema();
+    var attrSchema = schema.getField("message_attributes").schema().getElementType();
+
     var message = input.getElement();
-    var row = new GenericRecordBuilder(input.getSchema());
+    var row = new GenericRecordBuilder(schema);
+
     row.set("message_id", message.getMessageId());
-
-    var attributes = new ArrayList<GenericRecord>(message.getMessageAttributesCount());
-    var attributeSchema =
-        input.getSchema().getField("message_attributes").schema().getElementType();
-    for (Map.Entry<String, String> entry : message.getMessageAttributesMap().entrySet()) {
-      attributes.add(
-          new GenericRecordBuilder(attributeSchema)
-              .set("key", entry.getKey())
-              .set("value", entry.getValue())
-              .build());
-    }
-    row.set("message_attributes", attributes);
-
+    row.set(
+        "message_attributes",
+        message.getMessageAttributesMap().entrySet().stream()
+            .map(
+                entry ->
+                    new GenericRecordBuilder(attrSchema)
+                        .set("key", entry.getKey())
+                        .set("value", entry.getValue())
+                        .build())
+            .collect(Collectors.toList()));
     row.set("message_data", message.getMessageData().asReadOnlyByteBuffer());
     row.set("received_at", Timestamps.toMicros(message.getReceivedAt()));
     row.set("error", message.getError());
