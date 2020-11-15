@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+/** A high-level client for the time series API. */
 public class TimeSeriesClient {
   private final TimeSeriesServiceBlockingStub stub;
 
@@ -29,6 +30,7 @@ public class TimeSeriesClient {
     this.stub = stub;
   }
 
+  /** Returns a map of interval timestamps to interval values for the given time series. */
   public ImmutableMap<ZonedDateTime, Double> getIntervalValues(
       String name,
       Instant start,
@@ -55,6 +57,7 @@ public class TimeSeriesClient {
     return results.build();
   }
 
+  /** Returns a list of time series which match the given name prefix. */
   public TimeSeriesList listTimeSeries(String namePrefix) {
     var req = ListTimeSeriesRequest.newBuilder().setNamePrefix(namePrefix).build();
     return stub.listTimeSeries(req);
