@@ -49,10 +49,6 @@ public class PCollectionSubject<T> extends Subject {
     PAssert.that(actual).containsInAnyOrder(elements);
   }
 
-  public void containsExactlyInAnyOrder(Iterable<T> elements) {
-    PAssert.that(actual).containsInAnyOrder(elements);
-  }
-
   public void allSatisfy(SerializableConsumer<T> consumer) {
     PAssert.that(actual).satisfies(new SerConFunc<>(consumer));
   }
