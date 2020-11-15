@@ -157,6 +157,7 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
     try {
       return Event.parseFrom(payload);
     } catch (InvalidProtocolBufferException ignored) {
+      // It's not a binary protobuf, so continue.
     }
 
     // If this fails, we try parsing the payload as JSON.
@@ -165,6 +166,7 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
       JsonFormat.parser().merge(new String(payload, Charsets.UTF_8), builder);
       return builder.build();
     } catch (InvalidProtocolBufferException ignored) {
+      // It's not a JSON protobuf, so continue.
     }
 
     // If we can't parse it as either protobuf or JSON, then oh well.
