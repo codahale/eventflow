@@ -34,7 +34,8 @@ public class InvalidMessageToAvroTest {
 
   @Before
   public void setUp() throws Exception {
-    this.schema = Schemas.tableSchemaToAvroSchema(Schemas.loadTableSchema("invalid_messages"));
+    this.schema =
+        BeamAvroSchemas.tableSchemaToAvroSchema(Schemas.loadTableSchema("invalid_messages"));
   }
 
   @Test

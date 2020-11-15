@@ -36,7 +36,7 @@ public class EventToAvroTest {
 
   @Before
   public void setUp() throws Exception {
-    this.schema = Schemas.tableSchemaToAvroSchema(Schemas.loadTableSchema("events"));
+    this.schema = BeamAvroSchemas.tableSchemaToAvroSchema(Schemas.loadTableSchema("events"));
   }
 
   @Test
