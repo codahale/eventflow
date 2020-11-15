@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.eventflow.ingest;
+package io.eventflow.testing.beam;
 
 import com.google.api.services.bigquery.model.TableSchema;
 import java.util.List;
 import org.apache.avro.Schema;
 
-class BeamAvroSchemas {
-  private BeamAvroSchemas() {
+public class BeamSchemas {
+  private BeamSchemas() {
     // singleton
   }
 

@@ -22,6 +22,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.pb.Event;
 import io.eventflow.ingest.pb.InvalidMessage;
+import io.eventflow.testing.beam.BeamSchemas;
 import java.io.IOException;
 import org.apache.avro.Schema;
 import org.apache.beam.sdk.io.gcp.bigquery.AvroWriteRequest;
@@ -34,8 +35,7 @@ public class InvalidMessageToAvroTest {
 
   @Before
   public void setUp() throws Exception {
-    this.schema =
-        BeamAvroSchemas.tableSchemaToAvroSchema(Schemas.loadTableSchema("invalid_messages"));
+    this.schema = BeamSchemas.tableSchemaToAvroSchema(Schemas.loadTableSchema("invalid_messages"));
   }
 
   @Test

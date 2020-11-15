@@ -22,6 +22,7 @@ import com.google.protobuf.StringValue;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.AttributeValues;
 import io.eventflow.common.pb.Event;
+import io.eventflow.testing.beam.BeamSchemas;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -36,7 +37,7 @@ public class EventToAvroTest {
 
   @Before
   public void setUp() throws Exception {
-    this.schema = BeamAvroSchemas.tableSchemaToAvroSchema(Schemas.loadTableSchema("events"));
+    this.schema = BeamSchemas.tableSchemaToAvroSchema(Schemas.loadTableSchema("events"));
   }
 
   @Test
