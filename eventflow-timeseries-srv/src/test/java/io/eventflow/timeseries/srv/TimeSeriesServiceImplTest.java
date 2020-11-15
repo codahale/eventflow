@@ -30,7 +30,7 @@ import com.google.cloud.spanner.ResultSets;
 import com.google.cloud.spanner.Statement;
 import com.google.cloud.spanner.Struct;
 import com.google.cloud.spanner.Type;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.timeseries.api.AggregateFunction;
 import io.eventflow.timeseries.api.GetIntervalValuesRequest;
@@ -173,7 +173,7 @@ public class TimeSeriesServiceImplTest {
 
     assertThat(res)
         .isEqualTo(
-            ImmutableMap.of(
+            ImmutableSortedMap.of(
                 ZonedDateTime.of(2020, 10, 29, 18, 0, 0, 0, timeZone), 123.4d,
                 ZonedDateTime.of(2020, 10, 29, 18, 1, 0, 0, timeZone), 56.789d));
 
@@ -238,7 +238,7 @@ public class TimeSeriesServiceImplTest {
 
     assertThat(res)
         .isEqualTo(
-            ImmutableMap.of(
+            ImmutableSortedMap.of(
                 ZonedDateTime.of(2020, 10, 29, 18, 0, 0, 0, timeZone), 123.4d,
                 ZonedDateTime.of(2020, 10, 29, 18, 1, 0, 0, timeZone), 56.789d));
 
@@ -297,7 +297,7 @@ public class TimeSeriesServiceImplTest {
 
     assertThat(res)
         .isEqualTo(
-            ImmutableMap.of(
+            ImmutableSortedMap.of(
                 ZonedDateTime.of(2020, 10, 29, 18, 0, 0, 0, timeZone), 123.4d,
                 ZonedDateTime.of(2020, 10, 29, 18, 1, 0, 0, timeZone), 56.789d));
 
@@ -362,7 +362,7 @@ public class TimeSeriesServiceImplTest {
 
     assertThat(res)
         .isEqualTo(
-            ImmutableMap.of(
+            ImmutableSortedMap.of(
                 ZonedDateTime.of(2020, 10, 29, 18, 0, 0, 0, timeZone), 123.4d,
                 ZonedDateTime.of(2020, 10, 29, 18, 1, 0, 0, timeZone), 56.789d));
 
@@ -426,7 +426,7 @@ public class TimeSeriesServiceImplTest {
 
     assertThat(res)
         .isEqualTo(
-            ImmutableMap.of(
+            ImmutableSortedMap.of(
                 ZonedDateTime.of(2020, 10, 29, 18, 0, 0, 0, timeZone), 123.4d,
                 ZonedDateTime.of(2020, 10, 29, 18, 1, 0, 0, timeZone), 56.789d));
 

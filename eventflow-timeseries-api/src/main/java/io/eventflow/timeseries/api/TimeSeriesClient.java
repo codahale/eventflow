@@ -15,7 +15,8 @@
  */
 package io.eventflow.timeseries.api;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.timeseries.api.TimeSeriesServiceGrpc.TimeSeriesServiceBlockingStub;
 import java.time.Instant;
@@ -31,13 +32,15 @@ public class TimeSeriesClient {
   }
 
   /** Returns a map of interval timestamps to interval values for the given time series. */
-  public ImmutableMap<ZonedDateTime, Double> getIntervalValues(
+  public ImmutableSortedMap<ZonedDateTime, Double> getIntervalValues(
       String name,
       Instant start,
       Instant end,
       ZoneId timeZone,
       Granularity granularity,
       AggregateFunction aggregateFunction) {
+    Preconditions.checkArgument(start.isBefore(end), "start must be before end");
+
     var req =
         GetIntervalValuesRequest.newBuilder()
             .setName(name)
@@ -47,9 +50,9 @@ public class TimeSeriesClient {
             .setGranularity(granularity)
             .setAggregateFunction(aggregateFunction)
             .build();
+
     var resp = stub.getIntervalValues(req);
-    var results =
-        ImmutableMap.<ZonedDateTime, Double>builderWithExpectedSize(resp.getTimestampsCount());
+    var results = ImmutableSortedMap.<ZonedDateTime, Double>naturalOrder();
     for (var i = 0; i < resp.getTimestampsCount(); i++) {
       var ts = Instant.ofEpochSecond(resp.getTimestamps(i));
       results.put(ts.atZone(timeZone), resp.getValues(i));

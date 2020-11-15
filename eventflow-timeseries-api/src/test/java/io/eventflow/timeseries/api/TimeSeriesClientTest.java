@@ -21,7 +21,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.protobuf.util.Timestamps;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcServerRule;
@@ -80,7 +80,7 @@ public class TimeSeriesClientTest {
 
     assertThat(results)
         .isEqualTo(
-            ImmutableMap.of(
+            ImmutableSortedMap.of(
                 ZonedDateTime.of(1973, 11, 29, 14, 33, 9, 0, timeZone),
                 22.3,
                 ZonedDateTime.of(2009, 2, 13, 16, 31, 31, 0, timeZone),
