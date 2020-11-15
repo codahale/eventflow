@@ -48,7 +48,7 @@ public class RollupSpec implements Serializable {
   public static RollupSpec parse(String spec) {
     var builder =
         ImmutableMultimap.<String, KV<String, TupleTag<KV<KV<String, Long>, Double>>>>builder();
-    for (String custom : Splitter.on(',').split(spec)) {
+    for (var custom : Splitter.on(',').split(spec)) {
       var parts = Splitter.on(':').limit(2).splitToList(custom);
       var matcher = ROLLUP.matcher(parts.get(1));
       if (!matcher.matches()) {

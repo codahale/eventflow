@@ -25,7 +25,6 @@ import io.eventflow.common.pb.AttributeValue;
 import io.eventflow.common.pb.Event;
 import io.eventflow.ingest.pb.InvalidMessage;
 import java.time.Clock;
-import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.transforms.DoFn;
@@ -127,7 +126,7 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
       return "no event attributes";
     }
 
-    for (Map.Entry<String, AttributeValue> attribute : event.getAttributesMap().entrySet()) {
+    for (var attribute : event.getAttributesMap().entrySet()) {
       var key = attribute.getKey();
       var value = attribute.getValue();
 

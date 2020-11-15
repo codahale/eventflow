@@ -48,7 +48,7 @@ public class TimeSeriesClient {
     var resp = stub.getIntervalValues(req);
     var results =
         ImmutableMap.<ZonedDateTime, Double>builderWithExpectedSize(resp.getTimestampsCount());
-    for (int i = 0; i < resp.getTimestampsCount(); i++) {
+    for (var i = 0; i < resp.getTimestampsCount(); i++) {
       var ts = Instant.ofEpochSecond(resp.getTimestamps(i));
       results.put(ts.atZone(timeZone), resp.getValues(i));
     }
@@ -56,7 +56,7 @@ public class TimeSeriesClient {
   }
 
   public TimeSeriesList listTimeSeries(String namePrefix) {
-    return stub.listTimeSeries(
-        ListTimeSeriesRequest.newBuilder().setNamePrefix(namePrefix).build());
+    var req = ListTimeSeriesRequest.newBuilder().setNamePrefix(namePrefix).build();
+    return stub.listTimeSeries(req);
   }
 }

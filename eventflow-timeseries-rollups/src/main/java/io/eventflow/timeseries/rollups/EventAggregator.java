@@ -125,7 +125,7 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
         j.add(event.getCustomer().getValue());
       }
 
-      for (String name : names) {
+      for (var name : names) {
         j.add(name);
       }
       return j.toString();
