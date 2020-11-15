@@ -17,49 +17,60 @@ package io.eventflow.publisher;
 
 import com.google.api.core.ApiFuture;
 import com.google.cloud.pubsub.v1.Publisher;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.util.Timestamps;
 import com.google.pubsub.v1.PubsubMessage;
 import io.eventflow.common.Constants;
 import io.eventflow.common.pb.Event;
-import java.io.IOException;
 import java.time.Clock;
 import java.util.UUID;
-import java.util.function.Supplier;
 
+/** Publishes events asynchronously to a Pub/Sub topic for ingestion. */
 public class EventPublisher {
-  private final Clock clock;
-  private final String source;
-  private final Publisher publisher;
-  private final Supplier<String> idGenerator;
 
-  public EventPublisher(String source, String topicName) throws IOException {
-    this(
-        Clock.systemUTC(),
-        source,
-        Publisher.newBuilder(topicName).build(),
-        () -> UUID.randomUUID().toString());
+  /** A thread-safe generator of unique IDs. */
+  @FunctionalInterface
+  public interface IdGenerator {
+    String generate();
   }
 
-  public EventPublisher(
-      Clock clock, String source, Publisher publisher, Supplier<String> idGenerator) {
+  private static final IdGenerator DEFAULT_GENERATOR = () -> UUID.randomUUID().toString();
+
+  private final String source;
+  private final Publisher publisher;
+  @VisibleForTesting final IdGenerator idGenerator;
+  @VisibleForTesting final Clock clock;
+
+  /** Create a new {@link EventPublisher} using the system clock and random UUIDs as event IDs. */
+  public EventPublisher(Publisher publisher, String source) {
+    this(publisher, source, Clock.systemUTC(), DEFAULT_GENERATOR);
+  }
+
+  /** Create a new {@link EventPublisher} with the given parameters. */
+  public EventPublisher(Publisher publisher, String source, Clock clock, IdGenerator idGenerator) {
     this.clock = clock;
     this.source = source;
     this.publisher = publisher;
     this.idGenerator = idGenerator;
   }
 
+  /** Publishes the given Event, setting a timestamp and source. */
   public ApiFuture<String> publish(Event.Builder event) {
-    var id = idGenerator.get();
-    event.setId(id).setTimestamp(Timestamps.fromMillis(clock.millis())).setSource(source);
+    var id = idGenerator.generate();
+    var timestamp = Timestamps.fromMillis(clock.millis());
 
-    return publisher.publish(
+    var data = event.setId(id).setTimestamp(timestamp).setSource(source).build().toByteString();
+    var msg =
         PubsubMessage.newBuilder()
-            .setData(event.build().toByteString())
+            .setData(data)
             .putAttributes(Constants.ID_ATTRIBUTE, id)
-            .putAttributes(Constants.TIMESTAMP_ATTRIBUTE, Timestamps.toString(event.getTimestamp()))
-            .build());
+            .putAttributes(Constants.TIMESTAMP_ATTRIBUTE, Timestamps.toString(timestamp))
+            .build();
+
+    return publisher.publish(msg);
   }
 
+  /** Publishes the given Event, setting a timestamp and source. */
   public ApiFuture<String> publish(Event event) {
     return publish(Event.newBuilder(event));
   }
