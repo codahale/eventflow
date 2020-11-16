@@ -37,7 +37,7 @@ public class EventAggregatorTest {
   @Rule public final TestPipeline pipeline = TestPipeline.create();
 
   private final RollupSpec rollups =
-      RollupSpec.parse("two:max(int),two:min(float),three:sum(duration)");
+      RollupSpec.parse("two:max:int,two:min:float,three:sum:duration");
   private final EventAggregator eventAggregator = new EventAggregator(rollups, new FakeRandom());
 
   @Test

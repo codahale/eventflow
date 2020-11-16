@@ -38,19 +38,26 @@ public class StreamingRollupPipeline {
     coders.registerCoderForClass(Event.class, ProtoCoder.of(Event.class));
 
     var customRollups = RollupSpec.parse(opts.getCustomRollups());
-    pipeline
-        .apply(
+
+    // Read events from Pub/Sub.
+    var messages =
+        pipeline.apply(
             "Read Events",
             PubsubIO.readProtos(Event.class)
                 .fromSubscription(parseSubscription(opts.getProject(), opts.getSubscription()))
-                .withIdAttribute(Constants.ID_ATTRIBUTE))
-        .apply("Aggregate Events", new EventAggregator(customRollups, new SecureRandom()))
-        .apply(
-            "Write To Spanner",
-            SpannerIO.write()
-                .withProjectId(opts.getProject())
-                .withInstanceId(opts.getInstanceId())
-                .withDatabaseId(opts.getDatabaseId()));
+                .withIdAttribute(Constants.ID_ATTRIBUTE));
+
+    // Batch, map, and aggregate event attribute values, converting them to Spanner mutations.
+    var mutations =
+        messages.apply("Aggregate Events", new EventAggregator(customRollups, new SecureRandom()));
+
+    // Write the mutations to Spanner.
+    mutations.apply(
+        "Write To Spanner",
+        SpannerIO.write()
+            .withProjectId(opts.getProject())
+            .withInstanceId(opts.getInstanceId())
+            .withDatabaseId(opts.getDatabaseId()));
   }
 
   private static String parseSubscription(String project, String s) {

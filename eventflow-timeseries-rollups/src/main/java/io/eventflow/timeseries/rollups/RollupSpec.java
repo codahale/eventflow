@@ -15,17 +15,18 @@
  */
 package io.eventflow.timeseries.rollups;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMultimap;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.StringJoiner;
-import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
 
+/** A specification of custom rollup types. */
 public class RollupSpec implements Serializable {
 
   private static final long serialVersionUID = 7801555686791523874L;
@@ -43,31 +44,34 @@ public class RollupSpec implements Serializable {
         private static final long serialVersionUID = 365666602980929507L;
       };
 
-  private static final Pattern ROLLUP = Pattern.compile("^(sum|max|min)\\((.+)\\)$");
-
+  /**
+   * Parses a rollup spec.
+   *
+   * <p>Rollup specs are comma-delimited triples separated by colons:
+   *
+   * <p>{@code event_type:func:attr1,event_type:func2:attr2}
+   *
+   * <p>The supported aggregate functions are {@code min}, {@code sum}, and {@code max}.
+   */
   public static RollupSpec parse(String spec) {
     var builder =
         ImmutableMultimap.<String, KV<String, TupleTag<KV<KV<String, Long>, Double>>>>builder();
-    for (var custom : Splitter.on(',').split(spec)) {
-      var parts = Splitter.on(':').limit(2).splitToList(custom);
-      var matcher = ROLLUP.matcher(parts.get(1));
-      if (!matcher.matches()) {
-        throw new IllegalArgumentException("bad rollup: " + parts.get(1));
-      }
-
+    for (var rollup : Splitter.on(',').split(spec)) {
+      var parts = Splitter.on(':').limit(3).splitToList(rollup);
+      Preconditions.checkArgument(parts.size() == 3, "invalid rollup: %s", rollup);
       var eventType = parts.get(0);
-      var aggregateFunction = matcher.group(1);
-      var attributeName = matcher.group(2);
-
+      var aggregateFunction = parts.get(1);
+      var attributeName = parts.get(2);
       if (aggregateFunction.equals(RollupSpec.MIN.getId())) {
         builder.put(eventType, KV.of(attributeName, RollupSpec.MIN));
       } else if (aggregateFunction.equals(RollupSpec.MAX.getId())) {
         builder.put(eventType, KV.of(attributeName, RollupSpec.MAX));
-      } else {
+      } else if (aggregateFunction.equals(RollupSpec.SUM.getId())) {
         builder.put(eventType, KV.of(attributeName, RollupSpec.SUM));
+      } else {
+        throw new IllegalArgumentException("invalid rollup: " + rollup);
       }
     }
-
     return new RollupSpec(builder.build());
   }
 

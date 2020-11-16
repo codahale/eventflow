@@ -42,6 +42,11 @@ import org.apache.beam.sdk.values.PCollectionList;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.joda.time.Duration;
 
+/**
+ * A Beam transform which windows incoming events into minutely batches, maps batched events into
+ * rollup group keys and values, aggregates them by rollup types, and maps those aggregates to
+ * Spanner inserts.
+ */
 public class EventAggregator extends PTransform<PCollection<Event>, PCollection<Mutation>> {
   private static final long serialVersionUID = -4941981619223641177L;
 
@@ -56,24 +61,37 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
 
   @Override
   public PCollection<Mutation> expand(PCollection<Event> input) {
-    var values =
-        input
-            .apply("Widow By Minute", Window.into(FixedWindows.of(Duration.standardMinutes(1))))
-            .apply(
-                "Map To Group Key And Values",
-                ParDo.of(new MapToGroupKeysAndValues(rollupSpec))
-                    .withOutputTags(
-                        RollupSpec.SUM, TupleTagList.of(List.of(RollupSpec.MIN, RollupSpec.MAX))));
+    // Window events into minutely batches.
+    var batched =
+        input.apply("Widow By Minute", Window.into(FixedWindows.of(Duration.standardMinutes(1))));
 
-    return PCollectionList.of(
+    // Map batched events to rollup group keys and values.
+    var groupKeysAndValues =
+        batched.apply(
+            "Map To Group Key And Values",
+            ParDo.of(new MapToGroupKeysAndValues(rollupSpec))
+                .withOutputTags(
+                    RollupSpec.SUM, TupleTagList.of(List.of(RollupSpec.MIN, RollupSpec.MAX))));
+
+    // Aggregate rollups by group key and rollup type.
+    var aggregates =
+        PCollectionList.of(
             List.of(
-                values.get(RollupSpec.SUM).apply("Sum Values", Sum.doublesPerKey()),
-                values.get(RollupSpec.MIN).apply("Min Values", Min.doublesPerKey()),
-                values.get(RollupSpec.MAX).apply("Max Values", Max.doublesPerKey())))
+                groupKeysAndValues.get(RollupSpec.SUM).apply("Sum Values", Sum.doublesPerKey()),
+                groupKeysAndValues.get(RollupSpec.MIN).apply("Min Values", Min.doublesPerKey()),
+                groupKeysAndValues.get(RollupSpec.MAX).apply("Max Values", Max.doublesPerKey())));
+
+    // Combine aggregates and map to Spanner inserts.
+    return aggregates
         .apply("Flatten", Flatten.pCollections())
         .apply("Map To Mutation", ParDo.of(new MapToStreamingMutation(random)));
   }
 
+  /**
+   * Maps events to rollup group keys and values. The group keys are composed of the time series
+   * name (e.g. event_type.attr.sum) and a 64-bit floating point value. Counts of all event types
+   * are recorded in addition to any specified rollups.
+   */
   private static class MapToGroupKeysAndValues extends DoFn<Event, KV<KV<String, Long>, Double>> {
     private static final long serialVersionUID = -3444438370108834605L;
 
@@ -86,7 +104,12 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
     @ProcessElement
     public void processElement(ProcessContext c) {
       var event = c.element();
-      var ts = truncate(event.getTimestamp());
+
+      // Truncate the event timestamp to the minute.
+      var ts =
+          Instant.ofEpochMilli(Timestamps.toMillis(event.getTimestamp()))
+              .truncatedTo(ChronoUnit.MINUTES)
+              .getEpochSecond();
 
       // Record the count.
       c.output(RollupSpec.SUM, KV.of(KV.of(metricName(event, "count"), ts), 1.0));
@@ -130,14 +153,12 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
       }
       return j.toString();
     }
-
-    private long truncate(com.google.protobuf.Timestamp timestamp) {
-      return Instant.ofEpochMilli(Timestamps.toMillis(timestamp))
-          .truncatedTo(ChronoUnit.MINUTES)
-          .getEpochSecond();
-    }
   }
 
+  /**
+   * Maps rollup aggregates to Spanner insert mutations, generating random insert IDs to allow for
+   * multiple rows per interval timestamp.
+   */
   private static class MapToStreamingMutation extends DoFn<KV<KV<String, Long>, Double>, Mutation> {
     private static final long serialVersionUID = -7963039695463881759L;
 

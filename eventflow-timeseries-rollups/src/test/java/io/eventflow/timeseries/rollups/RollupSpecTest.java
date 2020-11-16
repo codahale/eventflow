@@ -21,13 +21,17 @@ import org.apache.beam.sdk.values.KV;
 import org.junit.Test;
 
 public class RollupSpecTest {
-  private final RollupSpec spec =
-      RollupSpec.parse("event_type:sum(attr),event_type:min(attr),event_type2:max(attr2)");
 
   @Test
   public void rollupsByEventType() {
+    var spec = RollupSpec.parse("event_type:sum:attr,event_type:min:attr,event_type2:max:attr2");
     assertThat(spec.rollups("event_type"))
         .containsExactly(KV.of("attr", RollupSpec.SUM), KV.of("attr", RollupSpec.MIN));
     assertThat(spec.rollups("event_type2")).containsExactly(KV.of("attr2", RollupSpec.MAX));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void badSpec() {
+    var spec = RollupSpec.parse("event_type:sum,event_type:min:attr,event_type2:max:attr2");
   }
 }
