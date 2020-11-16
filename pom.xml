@@ -55,14 +55,15 @@
     <!-- Make builds reproducible. Use zero for the timestamp. -->
     <project.build.outputTimestamp>1970-01-01T00:00:00Z</project.build.outputTimestamp>
 
+    <!-- Build everything using Java 11. -->
     <maven.compiler.release>11</maven.compiler.release>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
 
+    <!-- Always use UTF-8. -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-    <google-java-format.version>1.9</google-java-format.version>
     <protobuf.version>3.14.0</protobuf.version>
     <slf4j.version>1.7.30</slf4j.version>
     <grpc.version>1.33.1</grpc.version>
