@@ -32,6 +32,6 @@ public class RollupSpecTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void badSpec() {
-    var spec = RollupSpec.parse("event_type:sum,event_type:min:attr,event_type2:max:attr2");
+    RollupSpec.parse("event_type:sum,event_type:min:attr,event_type2:max:attr2");
   }
 }
