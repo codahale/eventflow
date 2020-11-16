@@ -229,19 +229,37 @@
   </dependencies>
 
   <build>
+    <!-- Use the latest versions of key plugins. -->
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.22.2</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
     <extensions>
+      <!-- Detect OS for Protobuf/gRPC compiler artifact. -->
       <extension>
         <groupId>kr.motd.maven</groupId>
         <artifactId>os-maven-plugin</artifactId>
         <version>1.6.2</version>
       </extension>
     </extensions>
+
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.2</version>
-      </plugin>
       <!-- Compile Protobuf definitions, including gRPC services. -->
       <plugin>
         <groupId>org.xolstice.maven.plugins</groupId>
@@ -266,6 +284,7 @@
           </pluginArtifact>
         </configuration>
       </plugin>
+
       <!-- Use the Error Prone compiler for static analysis. Include the Nullaway plugin. -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -314,6 +333,8 @@
           </annotationProcessorPaths>
         </configuration>
       </plugin>
+
+      <!-- Format all Java and XML source files. -->
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
