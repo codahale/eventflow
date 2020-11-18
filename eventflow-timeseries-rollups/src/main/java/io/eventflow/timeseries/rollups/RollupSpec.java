@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableMultimap;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.StringJoiner;
-import javax.annotation.Nonnull;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
 
@@ -75,13 +74,11 @@ public class RollupSpec implements Serializable {
     return new RollupSpec(builder.build());
   }
 
-  @Nonnull
   private final ImmutableMultimap<String, KV<String, TupleTag<KV<KV<String, Long>, Double>>>>
       rollups;
 
   private RollupSpec(
-      @Nonnull
-          ImmutableMultimap<String, KV<String, TupleTag<KV<KV<String, Long>, Double>>>> rollups) {
+      ImmutableMultimap<String, KV<String, TupleTag<KV<KV<String, Long>, Double>>>> rollups) {
     this.rollups = rollups;
   }
 

@@ -58,8 +58,10 @@ import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
 public class TimeSeriesServiceImplTest {
-  @Rule public MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
-  @Rule public GrpcServerRule grpcServerRule = new GrpcServerRule();
+  @Rule
+  public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
+  @Rule public final GrpcServerRule grpcServerRule = new GrpcServerRule();
   @Mock private DatabaseClient spanner;
   @Mock private ReadOnlyTransaction tx;
   @Mock private Clock clock;
