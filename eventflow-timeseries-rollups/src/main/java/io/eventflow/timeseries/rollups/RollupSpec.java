@@ -18,8 +18,12 @@ package io.eventflow.timeseries.rollups;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.LinkedHashMultimap;
 import java.io.Serializable;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.StringJoiner;
 import org.apache.beam.sdk.values.KV;
@@ -54,37 +58,47 @@ public class RollupSpec implements Serializable {
    */
   public static RollupSpec parse(String spec) {
     var builder =
-        ImmutableMultimap.<String, KV<String, TupleTag<KV<KV<String, Long>, Double>>>>builder();
+        new LinkedHashMap<
+            String, LinkedHashMultimap<String, TupleTag<KV<KV<String, Long>, Double>>>>();
     for (var rollup : Splitter.on(',').split(spec)) {
       var parts = Splitter.on(':').limit(3).splitToList(rollup);
       Preconditions.checkArgument(parts.size() == 3, "invalid rollup: %s", rollup);
       var eventType = parts.get(0);
       var aggregateFunction = parts.get(1);
       var attributeName = parts.get(2);
+
+      var sub = builder.computeIfAbsent(eventType, k -> LinkedHashMultimap.create());
       if (aggregateFunction.equals(RollupSpec.MIN.getId())) {
-        builder.put(eventType, KV.of(attributeName, RollupSpec.MIN));
+        sub.put(attributeName, RollupSpec.MIN);
       } else if (aggregateFunction.equals(RollupSpec.MAX.getId())) {
-        builder.put(eventType, KV.of(attributeName, RollupSpec.MAX));
+        sub.put(attributeName, RollupSpec.MAX);
       } else if (aggregateFunction.equals(RollupSpec.SUM.getId())) {
-        builder.put(eventType, KV.of(attributeName, RollupSpec.SUM));
+        sub.put(attributeName, RollupSpec.SUM);
       } else {
         throw new IllegalArgumentException("invalid rollup: " + rollup);
       }
     }
-    return new RollupSpec(builder.build());
+
+    return new RollupSpec(
+        builder.entrySet().stream()
+            .collect(
+                ImmutableMap.toImmutableMap(
+                    Map.Entry::getKey, v -> ImmutableMultimap.copyOf(v.getValue()))));
   }
 
-  private final ImmutableMultimap<String, KV<String, TupleTag<KV<KV<String, Long>, Double>>>>
+  private final ImmutableMap<
+          String, ImmutableMultimap<String, TupleTag<KV<KV<String, Long>, Double>>>>
       rollups;
 
   private RollupSpec(
-      ImmutableMultimap<String, KV<String, TupleTag<KV<KV<String, Long>, Double>>>> rollups) {
+      ImmutableMap<String, ImmutableMultimap<String, TupleTag<KV<KV<String, Long>, Double>>>>
+          rollups) {
     this.rollups = rollups;
   }
 
-  ImmutableCollection<KV<String, TupleTag<KV<KV<String, Long>, Double>>>> rollups(
+  ImmutableCollection<Map.Entry<String, TupleTag<KV<KV<String, Long>, Double>>>> rollups(
       String eventType) {
-    return rollups.get(eventType);
+    return rollups.getOrDefault(eventType, ImmutableMultimap.of()).entries();
   }
 
   @Override

@@ -17,7 +17,7 @@ package io.eventflow.timeseries.rollups;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import org.apache.beam.sdk.values.KV;
+import java.util.Map;
 import org.junit.Test;
 
 public class RollupSpecTest {
@@ -26,8 +26,8 @@ public class RollupSpecTest {
   public void rollupsByEventType() {
     var spec = RollupSpec.parse("event_type:sum:attr,event_type:min:attr,event_type2:max:attr2");
     assertThat(spec.rollups("event_type"))
-        .containsExactly(KV.of("attr", RollupSpec.SUM), KV.of("attr", RollupSpec.MIN));
-    assertThat(spec.rollups("event_type2")).containsExactly(KV.of("attr2", RollupSpec.MAX));
+        .containsExactly(Map.entry("attr", RollupSpec.SUM), Map.entry("attr", RollupSpec.MIN));
+    assertThat(spec.rollups("event_type2")).containsExactly(Map.entry("attr2", RollupSpec.MAX));
   }
 
   @Test(expected = IllegalArgumentException.class)
