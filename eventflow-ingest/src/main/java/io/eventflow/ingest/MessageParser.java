@@ -25,6 +25,7 @@ import io.eventflow.common.pb.AttributeValue;
 import io.eventflow.common.pb.Event;
 import io.eventflow.ingest.pb.InvalidMessage;
 import java.time.Clock;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.transforms.DoFn;
@@ -60,7 +61,7 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
     var message = c.element();
 
     // First, we try parsing the message's data as an Event, either in protobuf or JSON.
-    var event = parse(message.getPayload());
+    var event = parse(Objects.requireNonNull(message).getPayload());
     if (event == null) {
       /// If that's unsuccessful, we output an InvalidMessage and bail.
       c.output(INVALID, invalidMessage(message).setError("invalid protobuf").build());
