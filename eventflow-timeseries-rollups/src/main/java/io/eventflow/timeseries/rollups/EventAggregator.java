@@ -25,6 +25,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.transforms.DoFn;
@@ -103,7 +104,7 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
 
     @ProcessElement
     public void processElement(ProcessContext c) {
-      var event = c.element();
+      var event = Objects.requireNonNull(c.element());
 
       // Truncate the event timestamp to the minute.
       var ts =
@@ -170,17 +171,22 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
 
     @ProcessElement
     public void processElement(ProcessContext c) {
-      var ts = com.google.cloud.Timestamp.ofTimeSecondsAndNanos(c.element().getKey().getValue(), 0);
+      var element = Objects.requireNonNull(c.element());
+      var key = Objects.requireNonNull(element.getKey());
+      var value = Objects.requireNonNull(element.getValue());
+      var keyKey = Objects.requireNonNull(key.getKey());
+      var keyValue = Objects.requireNonNull(key.getValue());
+      var ts = com.google.cloud.Timestamp.ofTimeSecondsAndNanos(keyValue, 0);
       c.output(
           Mutation.newInsertBuilder("intervals_minutes")
               .set("name")
-              .to(c.element().getKey().getKey())
+              .to(keyKey)
               .set("interval_ts")
               .to(ts)
               .set("insert_id")
               .to(random.nextLong())
               .set("value")
-              .to(c.element().getValue())
+              .to(value)
               .set("insert_ts")
               .to(Value.COMMIT_TIMESTAMP)
               .build());
