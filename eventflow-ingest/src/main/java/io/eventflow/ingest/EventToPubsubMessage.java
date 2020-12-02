@@ -19,6 +19,7 @@ import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.Constants;
 import io.eventflow.common.pb.Event;
 import java.util.HashMap;
+import java.util.Objects;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.transforms.DoFn;
 
@@ -28,7 +29,7 @@ public class EventToPubsubMessage extends DoFn<Event, PubsubMessage> {
 
   @ProcessElement
   public void processElement(ProcessContext c) {
-    var event = c.element();
+    var event = Objects.requireNonNull(c.element());
 
     var attributes = new HashMap<String, String>();
     attributes.put(Constants.ID_ATTRIBUTE, event.getId());
