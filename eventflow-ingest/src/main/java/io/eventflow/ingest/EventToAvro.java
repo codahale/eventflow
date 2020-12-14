@@ -19,6 +19,7 @@ import com.google.protobuf.util.Durations;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.pb.AttributeValue;
 import io.eventflow.common.pb.Event;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
@@ -33,10 +34,10 @@ public class EventToAvro implements SerializableFunction<AvroWriteRequest<Event>
 
   @Override
   public GenericRecord apply(AvroWriteRequest<Event> input) {
-    var schema = input.getSchema();
+    var schema = Objects.requireNonNull(input).getSchema();
     var attrSchema = schema.getField("attributes").schema().getElementType();
 
-    var event = input.getElement();
+    var event = Objects.requireNonNull(input.getElement());
     var row = new GenericRecordBuilder(schema);
 
     // Write common fields.

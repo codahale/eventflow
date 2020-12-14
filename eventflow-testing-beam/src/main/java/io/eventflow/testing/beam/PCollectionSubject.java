@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertAbout;
 import com.google.common.truth.FailureMetadata;
 import com.google.common.truth.Subject;
 import java.io.Serializable;
+import java.util.Objects;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.values.PCollection;
@@ -68,7 +69,7 @@ public class PCollectionSubject<T> extends Subject {
 
     @Override
     public Void apply(Iterable<T> input) {
-      for (T t : input) {
+      for (T t : Objects.requireNonNull(input)) {
         try {
           consumer.accept(t);
         } catch (Exception e) {

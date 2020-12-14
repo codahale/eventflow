@@ -18,6 +18,7 @@ package io.eventflow.ingest;
 import com.google.protobuf.TextFormat;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.ingest.pb.InvalidMessage;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -32,10 +33,10 @@ public class InvalidMessageToAvro
 
   @Override
   public GenericRecord apply(AvroWriteRequest<InvalidMessage> input) {
-    var schema = input.getSchema();
+    var schema = Objects.requireNonNull(input).getSchema();
     var attrSchema = schema.getField("message_attributes").schema().getElementType();
 
-    var message = input.getElement();
+    var message = Objects.requireNonNull(input.getElement());
     var row = new GenericRecordBuilder(schema);
 
     row.set("message_id", message.getMessageId());
