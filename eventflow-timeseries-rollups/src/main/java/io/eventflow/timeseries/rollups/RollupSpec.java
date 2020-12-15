@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.LinkedHashMultimap;
+import io.eventflow.timeseries.rollups.pb.RollupKey;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -34,15 +35,15 @@ public class RollupSpec implements Serializable {
 
   private static final long serialVersionUID = 7801555686791523874L;
 
-  static final TupleTag<KV<KV<String, Long>, Double>> SUM =
+  static final TupleTag<KV<RollupKey, Double>> SUM =
       new TupleTag<>("sum") {
         private static final long serialVersionUID = 365666602980929507L;
       };
-  static final TupleTag<KV<KV<String, Long>, Double>> MIN =
+  static final TupleTag<KV<RollupKey, Double>> MIN =
       new TupleTag<>("min") {
         private static final long serialVersionUID = 365666602980929507L;
       };
-  static final TupleTag<KV<KV<String, Long>, Double>> MAX =
+  static final TupleTag<KV<RollupKey, Double>> MAX =
       new TupleTag<>("max") {
         private static final long serialVersionUID = 365666602980929507L;
       };
@@ -58,8 +59,7 @@ public class RollupSpec implements Serializable {
    */
   public static RollupSpec parse(String spec) {
     var builder =
-        new LinkedHashMap<
-            String, LinkedHashMultimap<String, TupleTag<KV<KV<String, Long>, Double>>>>();
+        new LinkedHashMap<String, LinkedHashMultimap<String, TupleTag<KV<RollupKey, Double>>>>();
     for (var rollup : Splitter.on(',').split(spec)) {
       var parts = Splitter.on(':').limit(3).splitToList(rollup);
       Preconditions.checkArgument(parts.size() == 3, "invalid rollup: %s", rollup);
@@ -86,17 +86,15 @@ public class RollupSpec implements Serializable {
                     Map.Entry::getKey, v -> ImmutableMultimap.copyOf(v.getValue()))));
   }
 
-  private final ImmutableMap<
-          String, ImmutableMultimap<String, TupleTag<KV<KV<String, Long>, Double>>>>
+  private final ImmutableMap<String, ImmutableMultimap<String, TupleTag<KV<RollupKey, Double>>>>
       rollups;
 
   private RollupSpec(
-      ImmutableMap<String, ImmutableMultimap<String, TupleTag<KV<KV<String, Long>, Double>>>>
-          rollups) {
+      ImmutableMap<String, ImmutableMultimap<String, TupleTag<KV<RollupKey, Double>>>> rollups) {
     this.rollups = rollups;
   }
 
-  ImmutableCollection<Map.Entry<String, TupleTag<KV<KV<String, Long>, Double>>>> rollups(
+  ImmutableCollection<Map.Entry<String, TupleTag<KV<RollupKey, Double>>>> rollups(
       String eventType) {
     return rollups.getOrDefault(eventType, ImmutableMultimap.of()).entries();
   }

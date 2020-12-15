@@ -18,6 +18,7 @@ package io.eventflow.timeseries.rollups;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import io.eventflow.common.Constants;
 import io.eventflow.common.pb.Event;
+import io.eventflow.timeseries.rollups.pb.RollupKey;
 import java.security.SecureRandom;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.Pipeline;
@@ -36,6 +37,7 @@ public class StreamingRollupPipeline {
 
     var coders = pipeline.getCoderRegistry();
     coders.registerCoderForClass(Event.class, ProtoCoder.of(Event.class));
+    coders.registerCoderForClass(RollupKey.class, ProtoCoder.of(RollupKey.class));
 
     var customRollups = RollupSpec.parse(opts.getCustomRollups());
 

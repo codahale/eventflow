@@ -21,6 +21,7 @@ import com.google.protobuf.util.Durations;
 import com.google.protobuf.util.Timestamps;
 import io.eventflow.common.pb.AttributeValue;
 import io.eventflow.common.pb.Event;
+import io.eventflow.timeseries.rollups.pb.RollupKey;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -95,7 +96,7 @@ public class EventAggregator
    * name (e.g. event_type.attr.sum) and a 64-bit floating point value. Counts of all event types
    * are recorded in addition to any specified rollups.
    */
-  private static class MapToGroupKeysAndValues extends DoFn<Event, KV<KV<String, Long>, Double>> {
+  private static class MapToGroupKeysAndValues extends DoFn<Event, KV<RollupKey, Double>> {
     private static final long serialVersionUID = -3444438370108834605L;
 
     private final RollupSpec rollupSpec;
@@ -115,14 +116,22 @@ public class EventAggregator
               .getEpochSecond();
 
       // Record the count.
-      c.output(RollupSpec.SUM, KV.of(KV.of(metricName(event, "count"), ts), 1.0));
+      c.output(
+          RollupSpec.SUM,
+          KV.of(
+              RollupKey.newBuilder().setName(metricName(event, "count")).setTimestamp(ts).build(),
+              1.0));
 
       // Record all other rollups.
       for (var rollup : rollupSpec.rollups(event.getType())) {
         var name = rollup.getKey();
         var value = event.getAttributesMap().get(name);
         if (value != null) {
-          var key = KV.of(metricName(event, name, rollup.getValue().getId()), ts);
+          var key =
+              RollupKey.newBuilder()
+                  .setName(metricName(event, name, rollup.getValue().getId()))
+                  .setTimestamp(ts)
+                  .build();
           var output = extractValue(value);
           if (output != null) {
             c.output(rollup.getValue(), KV.of(key, output));
@@ -162,7 +171,7 @@ public class EventAggregator
    * Maps rollup aggregates to Spanner insert mutations, generating random insert IDs to allow for
    * multiple rows per interval timestamp.
    */
-  private static class MapToStreamingMutation extends DoFn<KV<KV<String, Long>, Double>, Mutation> {
+  private static class MapToStreamingMutation extends DoFn<KV<RollupKey, Double>, Mutation> {
     private static final long serialVersionUID = -7963039695463881759L;
 
     private final SecureRandom random;
@@ -176,13 +185,11 @@ public class EventAggregator
       var element = Objects.requireNonNull(c.element());
       var key = Objects.requireNonNull(element.getKey());
       var value = Objects.requireNonNull(element.getValue());
-      var keyKey = Objects.requireNonNull(key.getKey());
-      var keyValue = Objects.requireNonNull(key.getValue());
-      var ts = com.google.cloud.Timestamp.ofTimeSecondsAndNanos(keyValue, 0);
+      var ts = com.google.cloud.Timestamp.ofTimeSecondsAndNanos(key.getTimestamp(), 0);
       c.output(
           Mutation.newInsertBuilder("intervals_minutes")
               .set("name")
-              .to(keyKey)
+              .to(key.getName())
               .set("interval_ts")
               .to(ts)
               .set("insert_id")
