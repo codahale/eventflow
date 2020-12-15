@@ -27,7 +27,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
-import javax.annotation.Nullable;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.Flatten;
 import org.apache.beam.sdk.transforms.Max;
@@ -41,6 +40,8 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionList;
 import org.apache.beam.sdk.values.TupleTagList;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Duration;
 
 /**
@@ -48,7 +49,8 @@ import org.joda.time.Duration;
  * rollup group keys and values, aggregates them by rollup types, and maps those aggregates to
  * Spanner inserts.
  */
-public class EventAggregator extends PTransform<PCollection<Event>, PCollection<Mutation>> {
+public class EventAggregator
+    extends PTransform<@NonNull PCollection<Event>, @NonNull PCollection<Mutation>> {
   private static final long serialVersionUID = -4941981619223641177L;
 
   private final RollupSpec rollupSpec;
@@ -61,7 +63,7 @@ public class EventAggregator extends PTransform<PCollection<Event>, PCollection<
   }
 
   @Override
-  public PCollection<Mutation> expand(PCollection<Event> input) {
+  public @NonNull PCollection<Mutation> expand(PCollection<Event> input) {
     // Window events into minutely batches.
     var batched =
         input.apply("Widow By Minute", Window.into(FixedWindows.of(Duration.standardMinutes(1))));

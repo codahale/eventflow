@@ -24,7 +24,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import io.eventflow.timeseries.api.IntervalValues;
 import io.opencensus.trace.AttributeValue;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.params.SetParams;
 

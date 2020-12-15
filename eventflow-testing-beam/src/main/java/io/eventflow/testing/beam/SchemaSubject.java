@@ -21,7 +21,6 @@ import com.google.common.truth.FailureMetadata;
 import com.google.common.truth.Subject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileWriter;
@@ -29,6 +28,7 @@ import org.apache.avro.file.SeekableByteArrayInput;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class SchemaSubject extends Subject {
   public static Subject.Factory<SchemaSubject, Schema> schemas() {

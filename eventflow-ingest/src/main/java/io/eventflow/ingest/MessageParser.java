@@ -26,10 +26,10 @@ import io.eventflow.common.pb.Event;
 import io.eventflow.ingest.pb.InvalidMessage;
 import java.time.Clock;
 import java.util.Objects;
-import javax.annotation.Nullable;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.values.TupleTag;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Parses incoming Pub/Sub messages. If they parse as Events, outputs the parsed Event object with
