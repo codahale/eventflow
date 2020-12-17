@@ -109,29 +109,23 @@ public class EventAggregator
     public void processElement(ProcessContext c) {
       var event = Objects.requireNonNull(c.element());
 
-      // Truncate the event timestamp to the minute.
-      var ts =
-          Instant.ofEpochMilli(Timestamps.toMillis(event.getTimestamp()))
-              .truncatedTo(ChronoUnit.MINUTES)
-              .getEpochSecond();
+      // Use a common builder for rollup keys with the event timestamp truncated to the minute.
+      var builder =
+          RollupKey.newBuilder()
+              .setTimestamp(
+                  Instant.ofEpochMilli(Timestamps.toMillis(event.getTimestamp()))
+                      .truncatedTo(ChronoUnit.MINUTES)
+                      .getEpochSecond());
 
       // Record the count.
-      c.output(
-          RollupSpec.SUM,
-          KV.of(
-              RollupKey.newBuilder().setName(metricName(event, "count")).setTimestamp(ts).build(),
-              1.0));
+      c.output(RollupSpec.SUM, KV.of(builder.setName(metricName(event, "count")).build(), 1.0));
 
       // Record all other rollups.
       for (var rollup : rollupSpec.rollups(event.getType())) {
         var name = rollup.getKey();
         var value = event.getAttributesMap().get(name);
         if (value != null) {
-          var key =
-              RollupKey.newBuilder()
-                  .setName(metricName(event, name, rollup.getValue().getId()))
-                  .setTimestamp(ts)
-                  .build();
+          var key = builder.setName(metricName(event, name, rollup.getValue().getId())).build();
           var output = extractValue(value);
           if (output != null) {
             c.output(rollup.getValue(), KV.of(key, output));
@@ -156,6 +150,7 @@ public class EventAggregator
 
     private String metricName(Event event, String... names) {
       var j = new StringJoiner(".").add(event.getType());
+
       if (event.hasCustomer()) {
         j.add(event.getCustomer().getValue());
       }
@@ -163,6 +158,7 @@ public class EventAggregator
       for (var name : names) {
         j.add(name);
       }
+
       return j.toString();
     }
   }
