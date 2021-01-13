@@ -397,7 +397,7 @@
             </format>
           </formats>
         </configuration>
-        <!-- Check the formatting of everythig on compile. -->
+        <!-- Check the formatting of everything on compile. -->
         <executions>
           <execution>
             <id>spotless-check</id>

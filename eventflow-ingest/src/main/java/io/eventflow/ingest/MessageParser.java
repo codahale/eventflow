@@ -117,7 +117,7 @@ public class MessageParser extends DoFn<PubsubMessage, Event> {
       return "blank event source";
     }
 
-    // All events must have a vaid timestamp.
+    // All events must have a valid timestamp.
     if (!event.hasTimestamp() || !Timestamps.isValid(event.getTimestamp())) {
       return "invalid event timestamp";
     }
