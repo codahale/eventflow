@@ -9,7 +9,3 @@ time series intervals to Spanner. Those intervals are served back up by a gRPC s
 supports time zones, multiple levels of granularity, and different aggregation functions.
 
 It's designed to scale up to millions of events a second and require minimal operational resources.
-
-## TODO
-
-* [ ] Patiently wait for Dataflow to support Java 11
