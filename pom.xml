@@ -200,6 +200,13 @@
         <artifactId>opencensus-impl-core</artifactId>
         <version>${opencensus.version}</version>
       </dependency>
+
+      <!-- This version includes aarch64 libraries. -->
+      <dependency>
+        <groupId>org.xerial.snappy</groupId>
+        <artifactId>snappy-java</artifactId>
+        <version>1.1.8.2</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -290,12 +297,13 @@
           </execution>
         </executions>
         <configuration>
+          <!-- TODO change these back to os.detected.classifier when they ship aarch64 binaries -->
           <protocArtifact>
-            com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}
+            com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.name}-x86_64
           </protocArtifact>
           <pluginId>grpc-java</pluginId>
           <pluginArtifact>
-            io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}
+            io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.name}-x86_64
           </pluginArtifact>
         </configuration>
       </plugin>
