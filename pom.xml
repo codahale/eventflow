@@ -64,7 +64,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-    <protobuf.version>3.15.3</protobuf.version>
+    <protobuf.version>3.15.4</protobuf.version>
     <slf4j.version>1.7.30</slf4j.version>
     <grpc.version>1.36.0</grpc.version>
     <opencensus.version>0.28.3</opencensus.version>
