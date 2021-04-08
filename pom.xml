@@ -69,7 +69,7 @@
     <grpc.version>1.36.1</grpc.version>
     <opencensus.version>0.28.3</opencensus.version>
     <truth.version>1.1.2</truth.version>
-    <mockito.version>3.8.0</mockito.version>
+    <mockito.version>3.9.0</mockito.version>
   </properties>
 
   <dependencyManagement>
