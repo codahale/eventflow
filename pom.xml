@@ -361,7 +361,7 @@
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
-        <version>2.10.0</version>
+        <version>2.10.1</version>
         <configuration>
           <!-- Only check files that have been changed. -->
           <ratchetFrom>origin/main</ratchetFrom>
